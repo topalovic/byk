@@ -1,0 +1,9 @@
+!ext/byk.c
+!ext/byk/extconf.rb
+ext/byk/*
+
+.bundle/
+Gemfile.lock
+_yardoc/
+doc/
+pkg/
