@@ -2,6 +2,19 @@
 #include <ruby.h>
 #include <ruby/encoding.h>
 
+#ifndef rb_check_arity
+#define rb_check_arity rb_check_arity
+
+NORETURN(void rb_error_arity(int, int, int));
+
+static inline void
+rb_check_arity(int argc, int min, int max)
+{
+    if ((argc < min) || (max != -1 && argc > max))
+	rb_error_arity(argc, min, max);
+}
+#endif
+
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
 
 #define STR_CAT_COND_ASCII(force_ascii, dest, chr, ascii_chr, len, enc) \
@@ -126,7 +139,8 @@ str_to_latin(int argc, VALUE *argv, VALUE str, int ascii, int bang)
     rb_enc_associate(dest, enc);
 
     while (pos < end) {
-        int len, force_upper = 0;
+        int len;
+        int force_upper = 0;
 
         prev_codepoint = codepoint;
         codepoint = rb_enc_codepoint_len(pos, end, &len, enc);
