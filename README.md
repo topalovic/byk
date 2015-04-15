@@ -1,6 +1,8 @@
 Byk
 ===
 
+![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
+
 Fast transliteration of Serbian Cyrillic into Latin.
 
 This package was inspired by @dejan's
@@ -63,7 +65,7 @@ Note that these methods will take into account the
 
 ### How fast is fast?
 
-About [7x](benchmark) faster than the baseline Ruby implementation on
+About [7x faster](benchmark) than the baseline Ruby implementation on
 my hardware. YMMV of course.
 
 ### Compatibility
