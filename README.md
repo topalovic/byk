@@ -1,9 +1,9 @@
 Byk
 ===
 
-![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
-
 Fast transliteration of Serbian Cyrillic into Latin.
+
+![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
 
 This package was inspired by @dejan's
 [nice little gem](https://github.com/dejan/srbovanje), but this one
@@ -24,6 +24,7 @@ $ bundle
 ```
 
 Or install it yourself as:
+
 ```
 $ gem install byk
 ```
@@ -70,8 +71,8 @@ my hardware. YMMV of course.
 
 ### Compatibility
 
-Byk is supported under MRI Ruby 1.9.3, 2.0, 2.1 and 2.2. Earlier
-versions of MRI are untested.
+Byk is supported under MRI Ruby 2.0, 2.1 and 2.2. Earlier versions of
+MRI are untested (yet).
 
 ### Raison d'être
 
