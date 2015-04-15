@@ -2,45 +2,51 @@
 # coding: utf-8
 
 require "benchmark"
-require "byk"
-require "srbovanje"
 require "open-uri"
 
-pangram = "Фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима."
-ascii   = "The quick brown fox jumps over the lazy dog."
-mixed   = "1, 2, 3. Malo ћирилица, мало latinica;"
+%w[byk srbovanje].each do |gem|
+  begin
+    require gem
+  rescue LoadError
+    abort "Can't load \"#{gem}\".\ngem install #{gem}?"
+  end
+end
+
+ascii   = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam egestas finibus lorem."
+mixed   = '<meta name="description" content="ПОЛИТИКА Online, најстарији дневни лист на Балкану"/>'
+pangram = "Фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима. А сад да изравнамо."
 article = ""
 
 open("http://www.politika.rs/") { |io| article = io.read }
 
 samples = {
   :empty   => "",
-  :pangram => pangram * 100,
   :ascii   => ascii   * 100,
   :mixed   => mixed   * 100,
+  :pangram => pangram * 100,
   :long    => article
 }
 
 n = 100
 
 Benchmark.bmbm do |x|
-  samples.each do |label, text|
-    x.report("Srbovanje -- #{label}:") { n.times { text.latinicom } }
-    x.report("Byk       -- #{label}:") { n.times { text.to_latin  } }
+  samples.each do |label, sample|
+    x.report("Srbovanje -- #{label}:") { n.times { sample.latinicom } }
+    x.report("Byk       -- #{label}:") { n.times { sample.to_latin  } }
   end
 end
 
 =begin
                             user     system      total        real
-Srbovanje -- empty:     0.000000   0.000000   0.000000 (  0.000255)
-Byk       -- empty:     0.000000   0.000000   0.000000 (  0.000016)
-Srbovanje -- pangram:   0.460000   0.000000   0.460000 (  0.466208)
-Byk       -- pangram:   0.080000   0.010000   0.090000 (  0.081218)
-Srbovanje -- ascii:     0.280000   0.000000   0.280000 (  0.285615)
-Byk       -- ascii:     0.040000   0.000000   0.040000 (  0.042021)
-Srbovanje -- mixed:     0.260000   0.000000   0.260000 (  0.263672)
-Byk       -- mixed:     0.040000   0.000000   0.040000 (  0.037563)
-Srbovanje -- long:      4.220000   0.020000   4.240000 (  4.250494)
-Byk       -- long:      0.570000   0.000000   0.570000 (  0.580039)
+Srbovanje -- empty:     0.000000   0.000000   0.000000 (  0.000443)
+Byk       -- empty:     0.000000   0.000000   0.000000 (  0.000027)
+Srbovanje -- ascii:     0.570000   0.000000   0.570000 (  0.574047)
+Byk       -- ascii:     0.070000   0.000000   0.070000 (  0.069646)
+Srbovanje -- mixed:     0.630000   0.000000   0.630000 (  0.625497)
+Byk       -- mixed:     0.090000   0.000000   0.090000 (  0.087970)
+Srbovanje -- pangram:   0.670000   0.010000   0.680000 (  0.672947)
+Byk       -- pangram:   0.090000   0.000000   0.090000 (  0.092365)
+Srbovanje -- long:      4.250000   0.020000   4.270000 (  4.282203)
+Byk       -- long:      0.530000   0.010000   0.540000 (  0.536597)
 
 =end

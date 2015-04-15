@@ -5,9 +5,9 @@ Fast transliteration of Serbian Cyrillic into Latin.
 
 ![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
 
-This package was inspired by @dejan's
-[nice little gem](https://github.com/dejan/srbovanje), but this one
-comes with a C-optimized twist.
+Inspired by @dejan's
+[nice little gem](https://github.com/dejan/srbovanje),
+but this one comes with a C-optimized twist.
 
 ## Installation
 
@@ -33,7 +33,7 @@ $ gem install byk
 
 First, make sure to require the gem in your initializer:
 
-```
+```ruby
 require "byk"
 ```
 
@@ -45,7 +45,7 @@ This will extend `String` with a couple of simple methods:
 "Šeširdžija".to_ascii_latin  # => "Sesirdzija"
 ```
 
-There's also a destructive version of each:
+There's also a destructive variant of each:
 
 ```ruby
 text = "Жвазбука"
@@ -56,7 +56,7 @@ text                  # => "Zvazbuka"
 ```
 
 Note that these methods will take into account the
-[special two-letter rules](http://sr.wikipedia.org/wiki/Gajica#Abeceda):
+[two-letter capitalization rules](http://sr.wikipedia.org/wiki/Gajica#Abeceda):
 
 ```ruby
 "ĐORĐE Đorđević".to_ascii_latin # => "DJORDJE Djordjevic"
@@ -64,7 +64,7 @@ Note that these methods will take into account the
 
 ## How fast is fast?
 
-About [7x faster](benchmark) than the baseline Ruby implementation on
+About [7-8x faster](benchmark) than the baseline Ruby implementation on
 my hardware. YMMV of course.
 
 ## Raison d'être
@@ -81,7 +81,7 @@ with Ruby extensions, so there :smile_cat:
 Byk is supported under MRI Ruby 1.9.3, 2.0, 2.1 and 2.2. Earlier
 versions of MRI are untested (yet).
 
-## Code Status
+## Status
 
 [![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
 
