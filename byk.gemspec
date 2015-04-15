@@ -17,6 +17,8 @@ Gem::Specification.new do |s|
   s.homepage      = "https://github.com/topalovic/byk"
   s.license       = "MIT"
 
+  s.required_ruby_version = ">= 1.9.3"
+
   s.extensions    = ["ext/byk/extconf.rb"]
   s.require_paths = ["lib"]
 
