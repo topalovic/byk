@@ -58,23 +58,16 @@ text                  # => "Zvazbuka"
 Note that these methods will take into account the
 [special two-letter rules](http://sr.wikipedia.org/wiki/Gajica#Abeceda):
 
-```
+```ruby
 "ĐORĐE Đorđević".to_ascii_latin # => "DJORDJE Djordjevic"
 ```
 
-## Notes
-
-### How fast is fast?
+## How fast is fast?
 
 About [7x faster](benchmark) than the baseline Ruby implementation on
 my hardware. YMMV of course.
 
-### Compatibility
-
-Byk is supported under MRI Ruby 2.0, 2.1 and 2.2. Earlier versions of
-MRI are untested (yet).
-
-### Raison d'être
+## Raison d'être
 
 For massive transliteration (e.g. sites supporting dual script
 output), this kind of speed-up might be worthwhile, even with caching.
@@ -82,5 +75,18 @@ output), this kind of speed-up might be worthwhile, even with caching.
 Also, it's a well-defined problem with hard-set rules which makes it a
 natural target for optimization. Plus, it gave me an excuse to play
 with Ruby extensions, so there :smile_cat:
+
+## Compatibility
+
+Byk is supported under MRI Ruby 1.9.3, 2.0, 2.1 and 2.2. Earlier
+versions of MRI are untested (yet).
+
+## Code Status
+
+[![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
+
+## License
+
+This gem is released under the [MIT License](http://www.opensource.org/licenses/MIT).
 
 Уздравље!
