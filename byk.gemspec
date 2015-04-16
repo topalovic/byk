@@ -8,7 +8,7 @@ require "byk/version"
 Gem::Specification.new do |s|
   s.name          = "byk"
   s.version       = Byk::VERSION
-  s.date          = "2015-04-15"
+  s.date          = "2015-04-16"
   s.authors       = ["Nikola Topalović"]
   s.email         = "nikola.topalovic@gmail.com"
 
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.homepage      = "https://github.com/topalovic/byk"
   s.license       = "MIT"
 
-  s.required_ruby_version = ">= 1.9.3"
+  s.required_ruby_version = ">= 1.9.2"
 
   s.extensions    = ["ext/byk/extconf.rb"]
   s.require_paths = ["lib"]

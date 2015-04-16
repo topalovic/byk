@@ -7,7 +7,8 @@ Fast transliteration of Serbian Cyrillic into Latin.
 
 Inspired by @dejan's
 [nice little gem](https://github.com/dejan/srbovanje),
-but this one comes with a C-optimized twist.
+this one comes with a C-optimized twist.
+
 
 ## Installation
 
@@ -28,6 +29,7 @@ Or install it yourself as:
 ```
 $ gem install byk
 ```
+
 
 ## Usage
 
@@ -55,35 +57,42 @@ text.to_ascii_latin!  # => "Zvazbuka"
 text                  # => "Zvazbuka"
 ```
 
-Note that these methods will take into account the
+Note that these methods take into account the
 [two-letter capitalization rules](http://sr.wikipedia.org/wiki/Gajica#Abeceda):
 
 ```ruby
+"ЉИЉА Љиљановић".to_latin       # => "LJILJA Ljiljanović"
 "ĐORĐE Đorđević".to_ascii_latin # => "DJORDJE Djordjevic"
 ```
+
 
 ## How fast is fast?
 
 About [7-8x faster](benchmark) than the baseline Ruby implementation on
 my hardware. YMMV of course.
 
+
 ## Raison d'être
 
-For massive transliteration (e.g. sites supporting dual script
-output), this kind of speed-up might be worthwhile, even with caching.
+This kind of speed-up might prove worthwhile for massive
+transliteration projects (e.g. sites supporting dual script
+l10n). Remember, `Benchmark` is your friend.
 
-Also, it's a well-defined problem with hard-set rules which makes it a
-natural target for optimization. Plus, it gave me an excuse to play
+I found it to be a straightforward little problem, fit for this kind
+of tight optimization&hellip; which also gave me an excuse to play
 with Ruby extensions, so there :smile_cat:
+
 
 ## Compatibility
 
-Byk is supported under MRI Ruby 1.9.3, 2.0, 2.1 and 2.2. Earlier
-versions of MRI are untested (yet).
+Byk is supported under MRI Ruby 1.9.2, 1.9.3, 2.0, 2.1 and 2.2.
+Earlier versions of MRI are untested (yet).
+
 
 ## Status
 
 [![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
+
 
 ## License
 
