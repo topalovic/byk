@@ -1,13 +1,14 @@
 Byk
 ===
 
-Fast transliteration of Serbian Cyrillic into Latin.
+[![Gem Version](https://badge.fury.io/rb/byk.svg)](https://rubygems.org/gems/byk)
+[![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
 
 ![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
 
-Inspired by @dejan's
-[nice little gem](https://github.com/dejan/srbovanje),
-this one comes with a C-optimized twist.
+Fast transliteration of Serbian Cyrillic into Latin.<br />Inspired by
+@dejan's [nice little gem](https://github.com/dejan/srbovanje), this
+one comes with a C-optimized twist.
 
 
 ## Installation
@@ -87,11 +88,6 @@ with Ruby extensions, so there :smile_cat:
 
 Byk is supported under MRI Ruby 1.9.2, 1.9.3, 2.0, 2.1 and 2.2.
 Earlier versions of MRI are untested (yet).
-
-
-## Status
-
-[![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
 
 
 ## License
