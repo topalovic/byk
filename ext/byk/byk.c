@@ -3,9 +3,9 @@
 
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
 
-#define STR_CAT_COND_ASCII(ascii, dest, chr, ascii_chr, len, enc) \
-    ascii ? rb_enc_str_buf_cat(dest, chr, len, enc)               \
-          : str_cat_char(dest, ascii_chr, enc)
+#define STR_CAT_COND_ASCII(ascii, dest, chr, ascii_chr, len, enc)       \
+    ascii ? rb_str_buf_cat(dest, chr, len)                              \
+    : str_cat_char(dest, ascii_chr, enc)
 
 enum {
     LAT_CAP_TJ=262,
@@ -98,7 +98,7 @@ str_cat_char(VALUE str, unsigned int c, rb_encoding *enc)
     char s[16];
     int n = rb_enc_codelen(c, enc);
     rb_enc_mbcput(c, s, enc);
-    rb_enc_str_buf_cat(str, s, n, enc);
+    rb_str_buf_cat(str, s, n);
 }
 
 static VALUE
@@ -106,11 +106,11 @@ str_to_latin(VALUE str, int ascii, int bang)
 {
     VALUE dest;
     long dest_len;
-    char *pos = RSTRING_PTR(str);
-    char *end;
     int len, next_len;
     int seen_upper = 0;
     int force_upper = 0;
+    char *pos = RSTRING_PTR(str);
+    char *end, *seq_start = 0;
     unsigned int codepoint = 0;
     unsigned int next_codepoint = 0;
     rb_encoding *enc;
@@ -130,132 +130,146 @@ str_to_latin(VALUE str, int ascii, int bang)
             next_codepoint = rb_enc_codepoint_len(pos + len, end, &next_len, enc);
         }
 
-        force_upper = seen_upper || is_upper_case(next_codepoint);
-        seen_upper = is_upper_case(codepoint);
-
         /* Latin -> "ASCII Latin" conversion */
         if (ascii && codepoint >= LAT_CAP_TJ && codepoint <= LAT_ZH) {
+            if (seq_start) {
+                /* flush the sequence */
+                rb_str_buf_cat(dest, seq_start, pos - seq_start);
+                seq_start = 0;
+            }
             switch (codepoint) {
             case LAT_TJ:
-            case LAT_CH:     rb_enc_str_buf_cat(dest, "c", 1, enc); break;
-            case LAT_DJ:     rb_enc_str_buf_cat(dest, "dj", 2, enc); break;
-            case LAT_SH:     rb_enc_str_buf_cat(dest, "s", 1, enc); break;
-            case LAT_ZH:     rb_enc_str_buf_cat(dest, "z", 1, enc); break;
+            case LAT_CH:     rb_str_buf_cat(dest, "c",  1); break;
+            case LAT_DJ:     rb_str_buf_cat(dest, "dj", 2); break;
+            case LAT_SH:     rb_str_buf_cat(dest, "s",  1); break;
+            case LAT_ZH:     rb_str_buf_cat(dest, "z",  1); break;
             case LAT_CAP_TJ:
-            case LAT_CAP_CH: rb_enc_str_buf_cat(dest, "C", 1, enc); break;
-            case LAT_CAP_SH: rb_enc_str_buf_cat(dest, "S", 1, enc); break;
-            case LAT_CAP_ZH: rb_enc_str_buf_cat(dest, "Z", 1, enc); break;
-
+            case LAT_CAP_CH: rb_str_buf_cat(dest, "C",  1); break;
+            case LAT_CAP_SH: rb_str_buf_cat(dest, "S",  1); break;
+            case LAT_CAP_ZH: rb_str_buf_cat(dest, "Z",  1); break;
             case LAT_CAP_DJ:
-                force_upper ? rb_enc_str_buf_cat(dest, "DJ", 2, enc)
-                            : rb_enc_str_buf_cat(dest, "Dj", 2, enc);
+                (seen_upper || is_upper_case(next_codepoint))
+                    ? rb_str_buf_cat(dest, "DJ", 2)
+                    : rb_str_buf_cat(dest, "Dj", 2);
                 break;
             default:
-                rb_enc_str_buf_cat(dest, pos, len, enc);
+                rb_str_buf_cat(dest, pos, len);
             }
         }
 
-        /* Non-Cyrillic codepoints */
+        /* Mark a start of inconsequential sequence */
         else if (codepoint < CYR_CAP_DJ || codepoint > CYR_DZ) {
-            rb_enc_str_buf_cat(dest, pos, len, enc);
+            if (!seq_start)
+                seq_start = pos;
         }
 
         /* Cyrillic -> Latin conversion */
-        else if (codepoint >= CYR_A) {
-            switch (codepoint) {
-            case CYR_A:      rb_enc_str_buf_cat(dest, "a",  1, enc); break;
-            case CYR_B:      rb_enc_str_buf_cat(dest, "b",  1, enc); break;
-            case CYR_V:      rb_enc_str_buf_cat(dest, "v",  1, enc); break;
-            case CYR_G:      rb_enc_str_buf_cat(dest, "g",  1, enc); break;
-            case CYR_D:      rb_enc_str_buf_cat(dest, "d",  1, enc); break;
-            case CYR_E:      rb_enc_str_buf_cat(dest, "e",  1, enc); break;
-            case CYR_Z:      rb_enc_str_buf_cat(dest, "z",  1, enc); break;
-            case CYR_I:      rb_enc_str_buf_cat(dest, "i",  1, enc); break;
-            case CYR_K:      rb_enc_str_buf_cat(dest, "k",  1, enc); break;
-            case CYR_L:      rb_enc_str_buf_cat(dest, "l",  1, enc); break;
-            case CYR_M:      rb_enc_str_buf_cat(dest, "m",  1, enc); break;
-            case CYR_N:      rb_enc_str_buf_cat(dest, "n",  1, enc); break;
-            case CYR_O:      rb_enc_str_buf_cat(dest, "o",  1, enc); break;
-            case CYR_P:      rb_enc_str_buf_cat(dest, "p",  1, enc); break;
-            case CYR_R:      rb_enc_str_buf_cat(dest, "r",  1, enc); break;
-            case CYR_S:      rb_enc_str_buf_cat(dest, "s",  1, enc); break;
-            case CYR_T:      rb_enc_str_buf_cat(dest, "t",  1, enc); break;
-            case CYR_U:      rb_enc_str_buf_cat(dest, "u",  1, enc); break;
-            case CYR_F:      rb_enc_str_buf_cat(dest, "f",  1, enc); break;
-            case CYR_H:      rb_enc_str_buf_cat(dest, "h",  1, enc); break;
-            case CYR_C:      rb_enc_str_buf_cat(dest, "c",  1, enc); break;
-            case CYR_J:      rb_enc_str_buf_cat(dest, "j",  1, enc); break;
-            case CYR_LJ:     rb_enc_str_buf_cat(dest, "lj", 2, enc); break;
-            case CYR_NJ:     rb_enc_str_buf_cat(dest, "nj", 2, enc); break;
-            case CYR_DJ:     STR_CAT_COND_ASCII(ascii, dest, "dj", LAT_DJ, 2, enc); break;
-            case CYR_TJ:     STR_CAT_COND_ASCII(ascii, dest, "c", LAT_TJ, 1, enc); break;
-            case CYR_CH:     STR_CAT_COND_ASCII(ascii, dest, "c", LAT_CH, 1, enc); break;
-            case CYR_ZH:     STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc); break;
-            case CYR_SH:     STR_CAT_COND_ASCII(ascii, dest, "s", LAT_SH, 1, enc); break;
-            case CYR_DZ:
-                rb_enc_str_buf_cat(dest, "d", 1, enc);
-                STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
-                break;
-            default:
-                rb_enc_str_buf_cat(dest, pos, len, enc);
+        else {
+            if (seq_start) {
+                /* flush the sequence */
+                rb_str_buf_cat(dest, seq_start, pos - seq_start);
+                seq_start = 0;
+            }
+
+            if (codepoint >= CYR_A) {
+                switch (codepoint) {
+                case CYR_A:  rb_str_buf_cat(dest, "a",  1); break;
+                case CYR_B:  rb_str_buf_cat(dest, "b",  1); break;
+                case CYR_V:  rb_str_buf_cat(dest, "v",  1); break;
+                case CYR_G:  rb_str_buf_cat(dest, "g",  1); break;
+                case CYR_D:  rb_str_buf_cat(dest, "d",  1); break;
+                case CYR_E:  rb_str_buf_cat(dest, "e",  1); break;
+                case CYR_Z:  rb_str_buf_cat(dest, "z",  1); break;
+                case CYR_I:  rb_str_buf_cat(dest, "i",  1); break;
+                case CYR_J:  rb_str_buf_cat(dest, "j",  1); break;
+                case CYR_K:  rb_str_buf_cat(dest, "k",  1); break;
+                case CYR_L:  rb_str_buf_cat(dest, "l",  1); break;
+                case CYR_M:  rb_str_buf_cat(dest, "m",  1); break;
+                case CYR_N:  rb_str_buf_cat(dest, "n",  1); break;
+                case CYR_O:  rb_str_buf_cat(dest, "o",  1); break;
+                case CYR_P:  rb_str_buf_cat(dest, "p",  1); break;
+                case CYR_R:  rb_str_buf_cat(dest, "r",  1); break;
+                case CYR_S:  rb_str_buf_cat(dest, "s",  1); break;
+                case CYR_T:  rb_str_buf_cat(dest, "t",  1); break;
+                case CYR_U:  rb_str_buf_cat(dest, "u",  1); break;
+                case CYR_F:  rb_str_buf_cat(dest, "f",  1); break;
+                case CYR_H:  rb_str_buf_cat(dest, "h",  1); break;
+                case CYR_C:  rb_str_buf_cat(dest, "c",  1); break;
+                case CYR_LJ: rb_str_buf_cat(dest, "lj", 2); break;
+                case CYR_NJ: rb_str_buf_cat(dest, "nj", 2); break;
+                case CYR_DJ: STR_CAT_COND_ASCII(ascii, dest, "dj", LAT_DJ, 2, enc); break;
+                case CYR_TJ: STR_CAT_COND_ASCII(ascii, dest, "c",  LAT_TJ, 1, enc); break;
+                case CYR_CH: STR_CAT_COND_ASCII(ascii, dest, "c",  LAT_CH, 1, enc); break;
+                case CYR_ZH: STR_CAT_COND_ASCII(ascii, dest, "z",  LAT_ZH, 1, enc); break;
+                case CYR_SH: STR_CAT_COND_ASCII(ascii, dest, "s",  LAT_SH, 1, enc); break;
+                case CYR_DZ:
+                    rb_str_buf_cat(dest, "d", 1);
+                    STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
+                    break;
+                default:
+                    rb_str_buf_cat(dest, pos, len);
+                }
+            }
+            else {
+                force_upper = seen_upper || is_upper_case(next_codepoint);
+
+                switch (codepoint) {
+                case CYR_CAP_A:  rb_str_buf_cat(dest, "A",  1); break;
+                case CYR_CAP_B:  rb_str_buf_cat(dest, "B",  1); break;
+                case CYR_CAP_V:  rb_str_buf_cat(dest, "V",  1); break;
+                case CYR_CAP_G:  rb_str_buf_cat(dest, "G",  1); break;
+                case CYR_CAP_D:  rb_str_buf_cat(dest, "D",  1); break;
+                case CYR_CAP_E:  rb_str_buf_cat(dest, "E",  1); break;
+                case CYR_CAP_Z:  rb_str_buf_cat(dest, "Z",  1); break;
+                case CYR_CAP_I:  rb_str_buf_cat(dest, "I",  1); break;
+                case CYR_CAP_J:  rb_str_buf_cat(dest, "J",  1); break;
+                case CYR_CAP_K:  rb_str_buf_cat(dest, "K",  1); break;
+                case CYR_CAP_L:  rb_str_buf_cat(dest, "L",  1); break;
+                case CYR_CAP_M:  rb_str_buf_cat(dest, "M",  1); break;
+                case CYR_CAP_N:  rb_str_buf_cat(dest, "N",  1); break;
+                case CYR_CAP_O:  rb_str_buf_cat(dest, "O",  1); break;
+                case CYR_CAP_P:  rb_str_buf_cat(dest, "P",  1); break;
+                case CYR_CAP_R:  rb_str_buf_cat(dest, "R",  1); break;
+                case CYR_CAP_S:  rb_str_buf_cat(dest, "S",  1); break;
+                case CYR_CAP_T:  rb_str_buf_cat(dest, "T",  1); break;
+                case CYR_CAP_U:  rb_str_buf_cat(dest, "U",  1); break;
+                case CYR_CAP_F:  rb_str_buf_cat(dest, "F",  1); break;
+                case CYR_CAP_H:  rb_str_buf_cat(dest, "H",  1); break;
+                case CYR_CAP_C:  rb_str_buf_cat(dest, "C",  1); break;
+                case CYR_CAP_LJ: rb_str_buf_cat(dest, (force_upper ? "LJ" : "Lj"), 2); break;
+                case CYR_CAP_NJ: rb_str_buf_cat(dest, (force_upper ? "NJ" : "Nj"), 2); break;
+                case CYR_CAP_TJ: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_TJ, 1, enc); break;
+                case CYR_CAP_CH: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_CH, 1, enc); break;
+                case CYR_CAP_ZH: STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc); break;
+                case CYR_CAP_SH: STR_CAT_COND_ASCII(ascii, dest, "S", LAT_CAP_SH, 1, enc); break;
+                case CYR_CAP_DJ: STR_CAT_COND_ASCII(ascii, dest, (force_upper ? "DJ" : "Dj"), LAT_CAP_DJ, 2, enc); break;
+                case CYR_CAP_DZ:
+                    rb_str_buf_cat(dest, "D", 1);
+                    if (force_upper) {
+                        STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc);
+                    }
+                    else {
+                        STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
+                    }
+                    break;
+                default:
+                    rb_str_buf_cat(dest, pos, len);
+                }
             }
         }
 
-        /* Cyrillic -> Latin conversion, caps */
-        else {
-            switch (codepoint) {
-            case CYR_CAP_J:  rb_enc_str_buf_cat(dest, "J",  1, enc); break;
-            case CYR_CAP_A:  rb_enc_str_buf_cat(dest, "A",  1, enc); break;
-            case CYR_CAP_B:  rb_enc_str_buf_cat(dest, "B",  1, enc); break;
-            case CYR_CAP_V:  rb_enc_str_buf_cat(dest, "V",  1, enc); break;
-            case CYR_CAP_G:  rb_enc_str_buf_cat(dest, "G",  1, enc); break;
-            case CYR_CAP_D:  rb_enc_str_buf_cat(dest, "D",  1, enc); break;
-            case CYR_CAP_E:  rb_enc_str_buf_cat(dest, "E",  1, enc); break;
-            case CYR_CAP_Z:  rb_enc_str_buf_cat(dest, "Z",  1, enc); break;
-            case CYR_CAP_I:  rb_enc_str_buf_cat(dest, "I",  1, enc); break;
-            case CYR_CAP_K:  rb_enc_str_buf_cat(dest, "K",  1, enc); break;
-            case CYR_CAP_L:  rb_enc_str_buf_cat(dest, "L",  1, enc); break;
-            case CYR_CAP_M:  rb_enc_str_buf_cat(dest, "M",  1, enc); break;
-            case CYR_CAP_N:  rb_enc_str_buf_cat(dest, "N",  1, enc); break;
-            case CYR_CAP_O:  rb_enc_str_buf_cat(dest, "O",  1, enc); break;
-            case CYR_CAP_P:  rb_enc_str_buf_cat(dest, "P",  1, enc); break;
-            case CYR_CAP_R:  rb_enc_str_buf_cat(dest, "R",  1, enc); break;
-            case CYR_CAP_S:  rb_enc_str_buf_cat(dest, "S",  1, enc); break;
-            case CYR_CAP_T:  rb_enc_str_buf_cat(dest, "T",  1, enc); break;
-            case CYR_CAP_U:  rb_enc_str_buf_cat(dest, "U",  1, enc); break;
-            case CYR_CAP_F:  rb_enc_str_buf_cat(dest, "F",  1, enc); break;
-            case CYR_CAP_H:  rb_enc_str_buf_cat(dest, "H",  1, enc); break;
-            case CYR_CAP_C:  rb_enc_str_buf_cat(dest, "C",  1, enc); break;
-            case CYR_CAP_TJ: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_TJ, 1, enc); break;
-            case CYR_CAP_CH: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_CH, 1, enc); break;
-            case CYR_CAP_ZH: STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc); break;
-            case CYR_CAP_SH: STR_CAT_COND_ASCII(ascii, dest, "S", LAT_CAP_SH, 1, enc); break;
-            case CYR_CAP_LJ:
-                rb_enc_str_buf_cat(dest, (force_upper ? "LJ" : "Lj"), 2, enc);
-                break;
-            case CYR_CAP_NJ:
-                rb_enc_str_buf_cat(dest, (force_upper ? "NJ" : "Nj"), 2, enc);
-                break;
-            case CYR_CAP_DJ:
-                STR_CAT_COND_ASCII(ascii, dest, (force_upper ? "DJ" : "Dj"), LAT_CAP_DJ, 2, enc);
-                break;
-            case CYR_CAP_DZ:
-                rb_enc_str_buf_cat(dest, "D", 1, enc);
-                if (force_upper) {
-                    STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc);
-                }
-                else {
-                    STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
-                }
-                break;
-            default:
-                rb_enc_str_buf_cat(dest, pos, len, enc);
-            }
-        }
+        seen_upper = is_upper_case(codepoint);
+
         pos += len;
         len = next_len;
+
         codepoint = next_codepoint;
         next_codepoint = 0;
+    }
+
+    if (seq_start) {
+        /* flush the last sequence */
+        rb_str_buf_cat(dest, seq_start, pos - seq_start);
     }
 
     if (bang) {
