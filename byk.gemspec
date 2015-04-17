@@ -8,7 +8,7 @@ require "byk/version"
 Gem::Specification.new do |s|
   s.name          = "byk"
   s.version       = Byk::VERSION
-  s.date          = "2015-04-16"
+  s.date          = "2015-04-17"
   s.authors       = ["Nikola Topalović"]
   s.email         = "nikola.topalovic@gmail.com"
 
@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.files = [
     "LICENSE",
     "README.md",
+    "CHANGELOG.md",
     "lib/byk.rb",
     "lib/byk/version.rb",
     "ext/byk/byk.c"
