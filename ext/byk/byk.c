@@ -1,19 +1,5 @@
-#include <stdio.h>
 #include <ruby.h>
 #include <ruby/encoding.h>
-
-#ifndef rb_check_arity
-#define rb_check_arity rb_check_arity
-
-NORETURN(void rb_error_arity(int, int, int));
-
-static inline void
-rb_check_arity(int argc, int min, int max)
-{
-    if ((argc < min) || (max != -1 && argc > max))
-	rb_error_arity(argc, min, max);
-}
-#endif
 
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
 
@@ -116,21 +102,19 @@ str_cat_char(VALUE str, unsigned int c, rb_encoding *enc)
 }
 
 static VALUE
-str_to_latin(int argc, VALUE *argv, VALUE str, int ascii, int bang)
+str_to_latin(VALUE str, int ascii, int bang)
 {
     VALUE dest;
     long dest_len;
-    char *pos, *end;
-    rb_encoding *enc;
+    char *pos = RSTRING_PTR(str);
+    char *end;
     int len, next_len;
     int seen_upper = 0;
     int force_upper = 0;
     unsigned int codepoint = 0;
     unsigned int next_codepoint = 0;
+    rb_encoding *enc;
 
-    rb_check_arity(argc, 0, 1);
-
-    pos = RSTRING_PTR(str);
     if (!pos || RSTRING_LEN(str) == 0) return str;
 
     end = RSTRING_END(str);
@@ -286,29 +270,29 @@ str_to_latin(int argc, VALUE *argv, VALUE str, int ascii, int bang)
 }
 
 static VALUE
-rb_str_to_latin(int argc, VALUE *argv, VALUE str) {
-    return str_to_latin(argc, argv, str, 0, 0);
+rb_str_to_latin(VALUE str) {
+    return str_to_latin(str, 0, 0);
 }
 
 static VALUE
-rb_str_to_latin_bang(int argc, VALUE *argv, VALUE str) {
-    return str_to_latin(argc, argv, str, 0, 1);
+rb_str_to_latin_bang(VALUE str) {
+    return str_to_latin(str, 0, 1);
 }
 
 static VALUE
-rb_str_to_ascii_latin(int argc, VALUE *argv, VALUE str) {
-    return str_to_latin(argc, argv, str, 1, 0);
+rb_str_to_ascii_latin(VALUE str) {
+    return str_to_latin(str, 1, 0);
 }
 
 static VALUE
-rb_str_to_ascii_latin_bang(int argc, VALUE *argv, VALUE str) {
-    return str_to_latin(argc, argv, str, 1, 1);
+rb_str_to_ascii_latin_bang(VALUE str) {
+    return str_to_latin(str, 1, 1);
 }
 
 void Init_byk_native(void)
 {
-    rb_define_method(rb_cString, "to_latin",  rb_str_to_latin, -1);
-    rb_define_method(rb_cString, "to_latin!", rb_str_to_latin_bang, -1);
-    rb_define_method(rb_cString, "to_ascii_latin", rb_str_to_ascii_latin, -1);
-    rb_define_method(rb_cString, "to_ascii_latin!", rb_str_to_ascii_latin_bang, -1);
+    rb_define_method(rb_cString, "to_latin", rb_str_to_latin, 0);
+    rb_define_method(rb_cString, "to_latin!", rb_str_to_latin_bang, 0);
+    rb_define_method(rb_cString, "to_ascii_latin", rb_str_to_ascii_latin, 0);
+    rb_define_method(rb_cString, "to_ascii_latin!", rb_str_to_ascii_latin_bang, 0);
 }
