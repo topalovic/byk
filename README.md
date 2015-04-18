@@ -71,8 +71,9 @@ Note that these methods take into account the
 
 ## How fast is fast?
 
-About [7-8x faster](benchmark) than the baseline Ruby implementation on
-my hardware. YMMV of course.
+About [10-40x faster](benchmark) than the baseline Ruby implementation
+on my hardware, depending on the string's Cyrillic content ratio. YMMV
+of course.
 
 
 ## Raison d'être
@@ -88,10 +89,13 @@ with Ruby extensions, so there :smile_cat:
 
 ## Compatibility
 
-Byk is supported under MRI Ruby >= 1.9.2. I don't plan to support
-1.8.7 or older due to substantial C API changes between 1.8 and
-1.9. It doesn't build under Rubinius currently, but I intend to
-support it in future releases.
+Byk is supported under MRI Ruby >= 1.9.2.
+
+I don't plan to support 1.8.7 or older due to substantial C API
+changes between 1.8 and 1.9.
+
+It doesn't build under Rubinius currently, but I intend to support it
+in future releases.
 
 
 ## License
