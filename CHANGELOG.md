@@ -1,9 +1,13 @@
 # Changelog
 
+### Byk 0.5.0 (2015-04-18)
+
+* Performance tuning and refactoring, up to 5x speedup
+* Dropped the unused optional arg
+
 ### Byk 0.4.0 (2015-04-17)
 
-* Performance tuning and refactoring, ~10% speedup
-* Updated benchmark
+* Performance tuning and refactoring
 * Introduced changelog
 
 ### Byk 0.3.0 (2015-04-16)
