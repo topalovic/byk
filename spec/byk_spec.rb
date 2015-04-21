@@ -13,6 +13,10 @@ describe Byk do
   let(:pangram_latin_caps) { "FIJUČE VETAR U ŠIBLJU, LEDI PASAŽE I KUĆE IZA NJIH I GUNĐA U ODŽACIMA." }
   let(:pangram_ascii_latin_caps) { "FIJUCE VETAR U SIBLJU, LEDI PASAZE I KUCE IZA NJIH I GUNDJA U ODZACIMA." }
 
+  let(:full_cyrillic_coderange) { (0x400..0x4ff).map { |i| i.chr(Encoding::UTF_8) } }
+  let(:non_serbian_cyrillic_coderange) { full_cyrillic_coderange - Byk::AZBUKA - Byk::AZBUKA_CAPS }
+  let(:non_serbian_cyrillic) { non_serbian_cyrillic_coderange.join }
+
   let(:ascii) { "The quick brown fox jumps over the lazy dog." }
   let(:other) { "संस्कृतम् saṃskṛtam" }
 
@@ -34,19 +38,23 @@ describe Byk do
       expect(ascii.to_latin).to eq ascii
     end
 
-    it "doesn't modify latin" do
+    it "doesn't modify Latin" do
       expect(pangram_latin.to_latin).to eq pangram_latin
+    end
+
+    it "doesn't modify non-Serbian Cyrillic" do
+      expect(non_serbian_cyrillic.to_latin).to eq non_serbian_cyrillic
     end
 
     it "doesn't modify other scripts" do
       expect(other.to_latin).to eq other
     end
 
-    it "converts cyrillic to latin" do
+    it "converts Cyrillic to Latin" do
       expect(pangram.to_latin).to eq pangram_latin
     end
 
-    it "converts cyrillic caps to latin caps" do
+    it "converts Cyrillic caps to Latin caps" do
       expect(pangram_caps.to_latin).to eq pangram_latin_caps
     end
 
@@ -76,12 +84,8 @@ describe Byk do
         "ЉЉ" => "LJLJ",
         "ЂЂ" => "DJDJ",
         "ĐĐ" => "DJDJ",
-        "ГУЊ" => "GUNJ",
-        "ПАСУЉ" => "PASULJ",
-        "ЂУРАЂ" => "DJURADJ",
-        "ĐURAĐ" => "DJURADJ",
-        "ĐURAĐ Đorđević" => "DJURADJ Djordjevic",
-        "ĐURAĐ. Đorđević" => "DJURADJ. Djordjevic"
+        "ЂУРАЂ Ђорђевић" => "DJURADJ Djordjevic",
+        "ĐURAĐ Đorđević" => "DJURADJ Djordjevic"
       }
     }
 
@@ -93,23 +97,27 @@ describe Byk do
       expect(ascii.to_ascii_latin).to eq ascii
     end
 
+    it "doesn't modify non-Serbian Cyrillic" do
+      expect(non_serbian_cyrillic.to_ascii_latin).to eq non_serbian_cyrillic
+    end
+
     it "doesn't modify other scripts" do
       expect(other.to_ascii_latin).to eq other
     end
 
-    it "converts cyrillic to ASCII latin" do
+    it "converts Cyrillic to ASCII Latin" do
       expect(pangram.to_ascii_latin).to eq pangram_ascii_latin
     end
 
-    it "converts cyrillic caps to ASCII latin caps" do
+    it "converts Cyrillic caps to ASCII Latin caps" do
       expect(pangram_caps.to_ascii_latin).to eq pangram_ascii_latin_caps
     end
 
-    it "converts latin to ASCII latin" do
+    it "converts Latin to ASCII Latin" do
       expect(pangram_latin.to_ascii_latin).to eq pangram_ascii_latin
     end
 
-    it "converts latin caps to ASCII latin caps" do
+    it "converts Latin caps to ASCII Latin caps" do
       expect(pangram_latin_caps.to_ascii_latin).to eq pangram_ascii_latin_caps
     end
 
