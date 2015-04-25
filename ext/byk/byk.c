@@ -85,8 +85,7 @@ str_to_latin(VALUE str, int ascii, int bang)
     int len, next_len;
     int seen_upper = 0;
     int force_upper = 0;
-    char *pos = RSTRING_PTR(str);
-    char *end, *seq_start = 0;
+    char *pos, *end, *seq_start = 0;
     char cyr;
     unsigned int codepoint = 0;
     unsigned int next_codepoint = 0;
@@ -102,6 +101,8 @@ str_to_latin(VALUE str, int ascii, int bang)
         'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'C'
     };
 
+    StringValue(str);
+    pos = RSTRING_PTR(str);
     if (!pos || RSTRING_LEN(str) == 0) return str;
 
     end = RSTRING_END(str);
@@ -235,34 +236,67 @@ str_to_latin(VALUE str, int ascii, int bang)
     return str;
 }
 
+/**
+ * Returns a copy of <i>str</i> with the Serbian Cyrillic characters
+ * transliterated into Latin.
+ *
+ * @overload to_latin(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
 static VALUE
-rb_str_to_latin(VALUE str)
+rb_str_to_latin(VALUE self, VALUE str)
 {
     return str_to_latin(str, 0, 0);
 }
 
+/**
+ * Performs the transliteration of <code>Byk.to_latin</code> in place,
+ * returning <i>str</i>, whether changes were made or not.
+ *
+ * @overload to_latin!(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
 static VALUE
-rb_str_to_latin_bang(VALUE str)
+rb_str_to_latin_bang(VALUE self, VALUE str)
 {
     return str_to_latin(str, 0, 1);
 }
 
+/**
+ * Returns a copy of <i>str</i> with the Serbian Cyrillic
+ * characters transliterated into ASCII Latin.
+ *
+ * @overload to_ascii_latin(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
 static VALUE
-rb_str_to_ascii_latin(VALUE str)
+rb_str_to_ascii_latin(VALUE self, VALUE str)
 {
     return str_to_latin(str, 1, 0);
 }
 
+/**
+ * Performs the transliteration of <code>Byk.to_ascii_latin</code> in
+ * place, returning <i>str</i>, whether changes were made or not.
+ *
+ * @overload to_ascii_latin!(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
 static VALUE
-rb_str_to_ascii_latin_bang(VALUE str)
+rb_str_to_ascii_latin_bang(VALUE self, VALUE str)
 {
     return str_to_latin(str, 1, 1);
 }
 
 void Init_byk_native(void)
 {
-    rb_define_method(rb_cString, "to_latin", rb_str_to_latin, 0);
-    rb_define_method(rb_cString, "to_latin!", rb_str_to_latin_bang, 0);
-    rb_define_method(rb_cString, "to_ascii_latin", rb_str_to_ascii_latin, 0);
-    rb_define_method(rb_cString, "to_ascii_latin!", rb_str_to_ascii_latin_bang, 0);
+    VALUE Byk = rb_define_module("Byk");
+    rb_define_singleton_method(Byk, "to_latin", rb_str_to_latin, 1);
+    rb_define_singleton_method(Byk, "to_latin!", rb_str_to_latin_bang, 1);
+    rb_define_singleton_method(Byk, "to_ascii_latin", rb_str_to_ascii_latin, 1);
+    rb_define_singleton_method(Byk, "to_ascii_latin!", rb_str_to_ascii_latin_bang, 1);
 }
