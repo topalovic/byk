@@ -61,11 +61,38 @@ text                  # => "Zvazbuka"
 ```
 
 Note that these methods take into account the
-[two-letter capitalization rules](http://sr.wikipedia.org/wiki/Gajica#Abeceda):
+[digraph capitalization rules](http://sr.wikipedia.org/wiki/Гајица#.D0.94.D0.B8.D0.B3.D1.80.D0.B0.D1.84.D0.B8):
 
 ```ruby
 "ЉИЉА Љиљановић".to_latin        # => "LJILJA Ljiljanović"
 "ĐORĐE Đorđević".to_ascii_latin  # => "DJORDJE Djordjevic"
+```
+
+If you prefer not to monkey patch your strings, you can use the "safe"
+require:
+
+```ruby
+require "byk/safe"
+```
+
+and then call the module methods:
+
+```
+text = "Вук"
+Byk.to_latin(text)   # => "Vuk"
+text                 # => "Byk"
+Byk.to_latin!(text)  # => "Vuk"
+text                 # => "Vuk"
+```
+
+
+## Testing
+
+To test the gem, clone the repo and run:
+
+```
+$ bundle
+$ bundle exec rake
 ```
 
 
@@ -84,7 +111,7 @@ projects, e.g. sites supporting dual script content. Remember,
 
 I found transliteration to be a straightforward little problem that
 lends itself well to optimization. It also gave me an excuse to play
-with Ruby extensions, so there :smile_cat:
+with Ruby extensions, so there :smirk_cat:
 
 
 ## Compatibility
@@ -92,10 +119,8 @@ with Ruby extensions, so there :smile_cat:
 Byk is supported under MRI Ruby >= 1.9.2.
 
 I don't plan to support 1.8.7 or older due to substantial C API
-changes between 1.8 and 1.9.
-
-It doesn't build under Rubinius currently, but I intend to support it
-in future releases.
+changes between 1.8 and 1.9. It doesn't build under Rubinius
+currently, but I intend to support it in future releases.
 
 
 ## License
