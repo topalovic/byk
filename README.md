@@ -77,7 +77,7 @@ require "byk/safe"
 
 and then call the module methods:
 
-```
+```ruby
 text = "Вук"
 Byk.to_latin(text)   # => "Vuk"
 text                 # => "Byk"
