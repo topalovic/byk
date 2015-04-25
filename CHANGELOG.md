@@ -1,5 +1,11 @@
 # Changelog
 
+### Byk 0.6.0 (2015-04-25)
+
+* Introduced module methods and the optional safe require
+* Documented the methods
+* Upgraded spec suite
+
 ### Byk 0.5.0 (2015-04-18)
 
 * Performance tuning and refactoring, up to 5x speedup
