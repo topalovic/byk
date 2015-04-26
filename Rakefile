@@ -1,4 +1,3 @@
-#require "bundler/gem_tasks"
 require "rake/extensiontask"
 require "rubygems/package_task"
 require "rspec/core/rake_task"
@@ -12,15 +11,25 @@ end
 
 RSpec::Core::RakeTask.new(:spec)
 
-task :build do
-  Dir.chdir("ext/byk") do
-    output = `ruby extconf.rb`
-    raise output unless $? == 0
-    output = `make`
-    raise output unless $? == 0
+namespace :ext do
+  task :build do
+    Dir.chdir("ext/byk") do
+      output = `ruby extconf.rb`
+      raise output unless $? == 0
+      output = `make`
+      raise output unless $? == 0
+    end
+  end
+
+  task :clean do
+    at_exit do
+      Dir.chdir("ext/byk") do
+        `make clean && rm Makefile`
+      end
+    end
   end
 end
 
-task :spec => :build
+task :spec => ["ext:build", "ext:clean"]
 
 task :default => :spec
