@@ -15,12 +15,9 @@ end
 ascii   = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam egestas finibus lorem."
 mixed   = '<meta name="description" content="ПОЛИТИКА Online, најстарији дневни лист на Балкану"/>'
 pangram = "Фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима. А сад да изравнамо."
-article = ""
-
-open("http://www.politika.rs/") { |io| article = io.read }
+article = open("http://www.politika.rs/").read
 
 samples = {
-  :empty   => "",
   :ascii   => ascii   * 100,
   :mixed   => mixed   * 100,
   :pangram => pangram * 100,
@@ -38,8 +35,6 @@ end
 
 =begin
                             user     system      total        real
-Srbovanje -- empty:     0.000000   0.000000   0.000000 (  0.000087)
-Byk       -- empty:     0.000000   0.000000   0.000000 (  0.000009)
 Srbovanje -- ascii:     0.320000   0.000000   0.320000 (  0.322403)
 Byk       -- ascii:     0.010000   0.000000   0.010000 (  0.008082)
 Srbovanje -- mixed:     0.360000   0.000000   0.360000 (  0.360589)

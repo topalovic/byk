@@ -68,6 +68,9 @@ Note that these methods take into account the
 "ĐORĐE Đorđević".to_ascii_latin  # => "DJORDJE Djordjevic"
 ```
 
+
+## Safe require
+
 If you prefer not to monkey patch your strings, you can use the "safe"
 require:
 

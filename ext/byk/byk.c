@@ -43,12 +43,6 @@ enum {
 };
 
 static inline unsigned int
-is_cyrillic(unsigned int c)
-{
-    return c >= CYR_CAP_DJ && c <= CYR_DZ;
-}
-
-static inline unsigned int
 is_upper(unsigned int c)
 {
     return (c >= 65 && c <= 90)
@@ -61,11 +55,16 @@ is_upper(unsigned int c)
 }
 
 static inline unsigned int
+is_cyrillic(unsigned int c)
+{
+    return c >= CYR_CAP_DJ && c <= CYR_DZ;
+}
+
+static inline unsigned int
 maps_directly(unsigned int c)
 {
-    return c != CYR_ZH
-        && c != CYR_CAP_ZH
-        && ((c >= CYR_A && c <= CYR_C) || (c >= CYR_CAP_A && c <= CYR_CAP_C));
+    return (c >= CYR_A && c <= CYR_C && c != CYR_ZH) ||
+           (c >= CYR_CAP_A && c <= CYR_CAP_C && c != CYR_CAP_ZH);
 }
 
 static void
@@ -252,7 +251,7 @@ rb_str_to_latin(VALUE self, VALUE str)
 
 /**
  * Performs the transliteration of <code>Byk.to_latin</code> in place,
- * returning <i>str</i>, whether changes were made or not.
+ * returning <i>str</i>, whether any changes were made or not.
  *
  * @overload to_latin!(str)
  *   @param  [String] str text to be transliterated
@@ -280,7 +279,7 @@ rb_str_to_ascii_latin(VALUE self, VALUE str)
 
 /**
  * Performs the transliteration of <code>Byk.to_ascii_latin</code> in
- * place, returning <i>str</i>, whether changes were made or not.
+ * place, returning <i>str</i>, whether any changes were made or not.
  *
  * @overload to_ascii_latin!(str)
  *   @param  [String] str text to be transliterated
