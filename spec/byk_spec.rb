@@ -176,7 +176,7 @@ end
 
 describe String do
   it "responds to Byk methods" do
-    Byk.instance_methods.each do |method|
+    Byk.singleton_methods.each do |method|
       expect("").to respond_to(method)
     end
   end
