@@ -15,28 +15,29 @@ this one comes with a C-optimized twist</sub>
 
 ## Installation
 
-Add this line to your application's Gemfile:
+If you're using Bundler, add this line to your application's Gemfile:
 
 ```ruby
 gem "byk"
 ```
 
-And then execute:
+and then execute:
 
-```
+```sh
 $ bundle
 ```
 
-Or install it yourself as:
+Otherwise, install it yourself:
 
-```
+```sh
 $ gem install byk
 ```
 
 
 ## Usage
 
-First, make sure to require the gem in your initializer:
+Unless automatically required by Bundler, make sure to require the gem
+in your initializer:
 
 ```ruby
 require "byk"
@@ -45,22 +46,21 @@ require "byk"
 This will extend `String` with a couple of simple methods:
 
 ```ruby
-"Шеширџија".to_latin         # => "Šeširdžija"
-"Шеширџија".to_ascii_latin   # => "Sesirdzija"
-"Šeširdžija".to_ascii_latin  # => "Sesirdzija"
+"Шеширџија".to_latin        # => "Šeširdžija"
+"Шеширџија".to_ascii_latin  # => "Sesirdzija"
 ```
 
 There's also a destructive variant of each:
 
 ```ruby
-text = "Жвазбука"
-text.to_latin!        # => "Žvazbuka"
-text                  # => "Žvazbuka"
-text.to_ascii_latin!  # => "Zvazbuka"
-text                  # => "Zvazbuka"
+text = "Шеширџија"
+text.to_latin!        # => "Šeširdžija"
+text                  # => "Šeširdžija"
+text.to_ascii_latin!  # => "Sesirdzija"
+text                  # => "Sesirdzija"
 ```
 
-Note that these methods take into account the
+All of these methods take into account the
 [digraph capitalization rules](http://sr.wikipedia.org/wiki/Гајица#.D0.94.D0.B8.D0.B3.D1.80.D0.B0.D1.84.D0.B8):
 
 ```ruby
@@ -71,21 +71,28 @@ Note that these methods take into account the
 
 ## Safe require
 
-If you prefer not to monkey patch your strings, you can use the "safe"
-require:
+If you prefer not to monkey patch your strings, you can do a "safe"
+require in your Gemfile:
+
+
+```ruby
+gem "byk", :require => "byk/safe"
+```
+
+or initializer:
 
 ```ruby
 require "byk/safe"
 ```
 
-and then call the module methods:
+and then rely on module methods:
 
 ```ruby
-text = "Вук"
-Byk.to_latin(text)   # => "Vuk"
-text                 # => "Byk"
-Byk.to_latin!(text)  # => "Vuk"
-text                 # => "Vuk"
+text = "Жвазбука"
+Byk.to_latin(text)   # => "Žvazbuka"
+text                 # => "Жвазбука"
+Byk.to_latin!(text)  # => "Žvazbuka"
+text                 # => "Žvazbuka"
 ```
 
 
@@ -94,35 +101,23 @@ text                 # => "Vuk"
 To test the gem, clone the repo and run:
 
 ```
-$ bundle
-$ bundle exec rake
+$ bundle && bundle exec rake
 ```
 
 
 ## How fast is fast?
 
 About [10-40x faster](benchmark) than the baseline Ruby implementation
-on my hardware, depending on the string's Cyrillic content ratio. YMMV
-of course.
-
-
-## Raison d'être
+on my hardware, depending on the string's Cyrillic content ratio.
 
 This kind of speed-up might be worthwhile for massive localization
 projects, e.g. sites supporting dual script content. Remember,
 `Benchmark` is your friend.
 
-I found transliteration to be a straightforward little problem that
-lends itself well to optimization. It also gave me an excuse to play
-with Ruby extensions, so there :smirk_cat:
-
 
 ## Compatibility
 
-Byk is supported under MRI Ruby >= 1.9.2.
-
-I don't plan to support 1.8.7 or older due to substantial C API
-changes between 1.8 and 1.9. It doesn't build under Rubinius
+Byk is supported under MRI 1.9.2+. It doesn't build under Rubinius
 currently, but I intend to support it in future releases.
 
 
