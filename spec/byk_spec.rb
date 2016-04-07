@@ -1,5 +1,4 @@
 # coding: utf-8
-
 require "spec_helper"
 
 describe Byk do
@@ -24,70 +23,114 @@ describe Byk do
     let(:non_serbian_cyrillic) { non_serbian_cyrillic_coderange.join }
 
     let(:ascii) { "The quick brown fox jumps over the lazy dog." }
-    let(:other) { "संस्कृतम् saṃskṛtam" }
+    let(:other) { "संस्कृतम्" }
 
-    let(:mixed) { "संस्कृतम् saṃskṛtam илити Sanskrit, obrati ПАЖЊУ." }
-    let(:mixed_latin) { "संस्कृतम् saṃskṛtam iliti Sanskrit, obrati PAŽNJU." }
-    let(:mixed_ascii_latin) { "संस्कृतम् saṃskṛtam iliti Sanskrit, obrati PAZNJU." }
+    let(:mixed) { "संस्कृतम् илити Sanskrit, obrati ПАЖЊУ." }
+    let(:mixed_cyrillic) { "संस्कृतम् илити Санскрит, обрати ПАЖЊУ." }
+    let(:mixed_latin) { "संस्कृतम् iliti Sanskrit, obrati PAŽNJU." }
+    let(:mixed_ascii_latin) { "संस्कृतम् iliti Sanskrit, obrati PAZNJU." }
 
-    it "doesn't convert an empty string" do
+    it "doesn't translate an empty string" do
       expect(Byk.send(method, "")).to eq ""
     end
 
-    it "doesn't convert ASCII text" do
-      expect(Byk.send(method, ascii)).to eq ascii
+    it "doesn't translate foreign coderanges" do
+      expect(Byk.send(method, other)).to eq other
+    end
+  end
+
+  shared_examples :cyrillization_method do |method|
+    include_examples :base, method
+
+    let(:edge_cases) do
+      [
+        ["lJ", "љ"],
+        ["nJ", "њ"],
+        ["dŽ", "џ"]
+      ]
     end
 
-    it "doesn't convert non-Serbian Cyrillic" do
+    it "doesn't translate Cyrillic" do
+      expect(Byk.send(method, pangram)).to eq pangram
+    end
+
+    it "doesn't translate non-Serbian Cyrillic" do
       expect(Byk.send(method, non_serbian_cyrillic)).to eq non_serbian_cyrillic
     end
 
-    it "doesn't convert other coderanges" do
-      expect(Byk.send(method, other)).to eq other
+    it "translates Latin to Cyrillic" do
+      expect(Byk.send(method, pangram_latin)).to eq pangram
+    end
+
+    it "translates Latin caps to Cyrillic caps" do
+      expect(Byk.send(method, pangram_latin_caps)).to eq pangram_caps
+    end
+
+    it "translates mixed text properly" do
+      expect(Byk.send(method, mixed)).to eq mixed_cyrillic
+    end
+
+    it "translates edge cases properly" do
+      edge_cases.each do |input, output|
+        expect(Byk.send(method, input)).to eq output
+      end
+    end
+
+    it "translates ABECEDA to AZBUKA" do
+      expect(Byk::ABECEDA.map { |l| l.dup.send(:to_cyrillic) }).to match_array(Byk::AZBUKA)
+    end
+
+    it "translates ABECEDA_CAPS to AZBUKA_CAPS" do
+      expect(Byk::ABECEDA_CAPS.map { |l| l.dup.send(:to_cyrillic) }).to match_array(Byk::AZBUKA_CAPS)
     end
   end
 
   shared_examples :latinization_method do |method|
     include_examples :base, method
 
-    let(:edge_cases) {
+    let(:edge_cases) do
       [
-        ["Њ", "Nj"],
-        ["Љ", "Lj"],
-        ["Џ", "Dž"],
-        ["ЊЊ", "NJNJ"],
         ["ЉЉ", "LJLJ"],
+        ["ЊЊ", "NJNJ"],
         ["ЏЏ", "DŽDŽ"]
       ]
-    }
+    end
 
-    it "doesn't convert Latin" do
+    it "doesn't translate ASCII" do
+      expect(Byk.send(method, ascii)).to eq ascii
+    end
+
+    it "doesn't translate Latin" do
       expect(Byk.send(method, pangram_latin)).to eq pangram_latin
     end
 
-    it "converts Cyrillic to Latin" do
+    it "doesn't translate non-Serbian Cyrillic" do
+      expect(Byk.send(method, non_serbian_cyrillic)).to eq non_serbian_cyrillic
+    end
+
+    it "translates Cyrillic to Latin" do
       expect(Byk.send(method, pangram)).to eq pangram_latin
     end
 
-    it "converts Cyrillic caps to Latin caps" do
+    it "translates Cyrillic caps to Latin caps" do
       expect(Byk.send(method, pangram_caps)).to eq pangram_latin_caps
     end
 
-    it "converts mixed text properly" do
+    it "translates mixed text properly" do
       expect(Byk.send(method, mixed)).to eq mixed_latin
     end
 
-    it "converts edge cases properly" do
+    it "translates edge cases properly" do
       edge_cases.each do |input, output|
         expect(Byk.send(method, input)).to eq output
       end
     end
 
-    it "converts AZBUKA to ABECEDA" do
+    it "translates AZBUKA to ABECEDA" do
       expect(Byk::AZBUKA.map { |l| l.dup.send(method) }).to match_array(Byk::ABECEDA)
     end
 
-    it "converts AZBUKA_CAPS to ABECEDA_CAPS" do
+    it "translates AZBUKA_CAPS to ABECEDA_CAPS" do
       expect(Byk::AZBUKA_CAPS.map { |l| l.dup.send(method) }).to match_array(Byk::ABECEDA_CAPS)
     end
   end
@@ -95,7 +138,7 @@ describe Byk do
   shared_examples :ascii_latinization_method do |method|
     include_examples :base, method
 
-    let(:edge_cases) {
+    let(:edge_cases) do
       [
         ["Њ", "Nj"],
         ["Љ", "Lj"],
@@ -107,32 +150,36 @@ describe Byk do
         ["ЏЏ", "DZDZ"],
         ["ЂЂ", "DJDJ"],
         ["ĐĐ", "DJDJ"],
-        ["ЂУРАЂ Ђорђевић", "DJURADJ Djordjevic"],
-        ["ĐURAĐ Đorđević", "DJURADJ Djordjevic"]
+        ["ЂУРАЂ Ђурђевић", "DJURADJ Djurdjevic"],
+        ["ĐURAĐ Đurđević", "DJURADJ Djurdjevic"]
       ]
-    }
-
-    it "converts Cyrillic to ASCII Latin" do
-      expect(Byk.send(method, pangram)).to eq pangram_ascii_latin
     end
 
-    it "converts Cyrillic caps to ASCII Latin caps" do
-      expect(Byk.send(method, pangram_caps)).to eq pangram_ascii_latin_caps
+    it "doesn't translate ASCII" do
+      expect(Byk.send(method, ascii)).to eq ascii
     end
 
-    it "converts Latin to ASCII Latin" do
+    it "translates Latin to ASCII Latin" do
       expect(Byk.send(method, pangram_latin)).to eq pangram_ascii_latin
     end
 
-    it "converts Latin caps to ASCII Latin caps" do
+    it "translates Latin caps to ASCII Latin caps" do
       expect(Byk.send(method, pangram_latin_caps)).to eq pangram_ascii_latin_caps
     end
 
-    it "converts mixed text properly" do
+    it "translates Cyrillic to ASCII Latin" do
+      expect(Byk.send(method, pangram)).to eq pangram_ascii_latin
+    end
+
+    it "translates Cyrillic caps to ASCII Latin caps" do
+      expect(Byk.send(method, pangram_caps)).to eq pangram_ascii_latin_caps
+    end
+
+    it "translates mixed text properly" do
       expect(Byk.send(method, mixed)).to eq mixed_ascii_latin
     end
 
-    it "converts edge cases properly" do
+    it "translates edge cases properly" do
       edge_cases.each do |input, output|
         expect(Byk.send(method, input)).to eq output
       end
@@ -141,16 +188,26 @@ describe Byk do
 
   shared_examples :non_destructive_method do |method|
     it "doesn't modify the arg" do
-      str = "Ж"
+      str = "ЖŽ"
       expect { Byk.send(method, str) }.to_not change { str }
     end
   end
 
   shared_examples :destructive_method do |method|
     it "modifies the arg" do
-      str = "Ж"
+      str = "ЖŽ"
       expect { Byk.send(method, str) }.to change { str }
     end
+  end
+
+  describe ".to_cyrillic" do
+    it_behaves_like :cyrillization_method, :to_cyrillic
+    it_behaves_like :non_destructive_method, :to_cyrillic
+  end
+
+  describe ".to_cyrillic!" do
+    it_behaves_like :cyrillization_method, :to_cyrillic!
+    it_behaves_like :destructive_method, :to_cyrillic!
   end
 
   describe ".to_latin" do

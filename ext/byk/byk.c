@@ -3,72 +3,8 @@
 
 #define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
 
-#define STR_CAT_COND_ASCII(ascii, dest, chr, ascii_chr, len, enc)       \
-    ascii ? rb_str_buf_cat(dest, chr, len)                              \
-          : str_cat_char(dest, ascii_chr, enc)
-
-enum {
-    LAT_CAP_TJ = 0x106,
-    LAT_TJ,
-    LAT_CAP_CH = 0x10c,
-    LAT_CH,
-    LAT_CAP_DJ = 0x110,
-    LAT_DJ,
-    LAT_CAP_SH = 0x160,
-    LAT_SH,
-    LAT_CAP_ZH = 0x17d,
-    LAT_ZH,
-    CYR_CAP_DJ = 0x402,
-    CYR_CAP_J  = 0x408,
-    CYR_CAP_LJ,
-    CYR_CAP_NJ,
-    CYR_CAP_TJ,
-    CYR_CAP_DZ = 0x40f,
-    CYR_CAP_A,
-    CYR_CAP_ZH = 0x416,
-    CYR_CAP_C  = 0x426,
-    CYR_CAP_CH,
-    CYR_CAP_SH,
-    CYR_A  = 0x430,
-    CYR_ZH = 0x436,
-    CYR_C  = 0x446,
-    CYR_CH,
-    CYR_SH,
-    CYR_DJ = 0x452,
-    CYR_J  = 0x458,
-    CYR_LJ,
-    CYR_NJ,
-    CYR_TJ,
-    CYR_DZ = 0x45f
-};
-
-static inline unsigned int
-is_upper(unsigned int c)
-{
-    return (c >= 65 && c <= 90)
-        || (c >= CYR_CAP_DJ && c <= CYR_CAP_SH)
-        || c == LAT_CAP_TJ
-        || c == LAT_CAP_CH
-        || c == LAT_CAP_DJ
-        || c == LAT_CAP_SH
-        || c == LAT_CAP_ZH;
-}
-
-static inline unsigned int
-is_cyrillic(unsigned int c)
-{
-    return c >= CYR_CAP_DJ && c <= CYR_DZ;
-}
-
-static inline unsigned int
-maps_directly(unsigned int c)
-{
-    return (c >= CYR_A && c <= CYR_C && c != CYR_ZH) ||
-           (c >= CYR_CAP_A && c <= CYR_CAP_C && c != CYR_CAP_ZH);
-}
-
-static void
-str_cat_char(VALUE str, unsigned int c, rb_encoding *enc)
+static inline void
+_str_cat_char(VALUE str, unsigned c, rb_encoding *enc)
 {
     char s[16];
     int n = rb_enc_codelen(c, enc);
@@ -76,29 +12,216 @@ str_cat_char(VALUE str, unsigned int c, rb_encoding *enc)
     rb_str_buf_cat(str, s, n);
 }
 
+enum {
+    LAT_CAP_TJ=262, LAT_TJ, LAT_CAP_CH=268, LAT_CH,
+    LAT_CAP_DJ=272, LAT_DJ, LAT_CAP_SH=352, LAT_SH,
+    LAT_CAP_ZH=381, LAT_ZH, CYR_CAP_DJ=1026, CYR_CAP_J=1032,
+    CYR_CAP_LJ, CYR_CAP_NJ, CYR_CAP_TJ, CYR_CAP_DZ=1039,
+    CYR_CAP_A, CYR_CAP_B, CYR_CAP_V, CYR_CAP_G,
+    CYR_CAP_D, CYR_CAP_E, CYR_CAP_ZH, CYR_CAP_Z,
+    CYR_CAP_I, CYR_CAP_K=1050, CYR_CAP_L, CYR_CAP_M,
+    CYR_CAP_N, CYR_CAP_O, CYR_CAP_P, CYR_CAP_R,
+    CYR_CAP_S, CYR_CAP_T, CYR_CAP_U, CYR_CAP_F,
+    CYR_CAP_H, CYR_CAP_C, CYR_CAP_CH, CYR_CAP_SH,
+    CYR_A=1072, CYR_B, CYR_V, CYR_G, CYR_D,
+    CYR_E, CYR_ZH, CYR_Z, CYR_I, CYR_K=1082,
+    CYR_L, CYR_M, CYR_N, CYR_O, CYR_P,
+    CYR_R, CYR_S, CYR_T, CYR_U, CYR_F,
+    CYR_H, CYR_C, CYR_CH, CYR_SH, CYR_DJ=1106,
+    CYR_J=1112, CYR_LJ, CYR_NJ, CYR_TJ, CYR_DZ=1119
+};
+
+static inline unsigned
+is_cap(unsigned codepoint)
+{
+    if (codepoint >= 65 && codepoint <= 90) return 1;
+    if (codepoint >= CYR_CAP_DJ && codepoint <= CYR_CAP_SH) return 1;
+
+    switch(codepoint) {
+    case LAT_CAP_TJ:
+    case LAT_CAP_CH:
+    case LAT_CAP_DJ:
+    case LAT_CAP_SH:
+    case LAT_CAP_ZH:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static inline unsigned
+is_digraph(unsigned codepoint)
+{
+    switch(codepoint) {
+    case CYR_LJ:
+    case CYR_NJ:
+    case CYR_DZ:
+    case CYR_CAP_LJ:
+    case CYR_CAP_NJ:
+    case CYR_CAP_DZ:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static unsigned
+digraph_to_cyr(unsigned codepoint, unsigned codepoint2, unsigned capitalize, unsigned *next_out)
+{
+    static unsigned CYR_MAP[] = {
+        CYR_A, CYR_B, CYR_C, CYR_D, CYR_E, CYR_F,
+        CYR_G, CYR_H, CYR_I, CYR_J, CYR_K, CYR_L,
+        CYR_M, CYR_N, CYR_O, CYR_P, 0, CYR_R,
+        CYR_S, CYR_T, CYR_U, CYR_V, 0, 0, 0, CYR_Z
+    };
+
+    static unsigned CYR_CAPS_MAP[] = {
+        CYR_CAP_A, CYR_CAP_B, CYR_CAP_C, CYR_CAP_D, CYR_CAP_E, CYR_CAP_F,
+        CYR_CAP_G, CYR_CAP_H, CYR_CAP_I, CYR_CAP_J, CYR_CAP_K, CYR_CAP_L,
+        CYR_CAP_M, CYR_CAP_N, CYR_CAP_O, CYR_CAP_P, 0, CYR_CAP_R,
+        CYR_CAP_S, CYR_CAP_T, CYR_CAP_U, CYR_CAP_V, 0, 0, 0, CYR_CAP_Z
+    };
+
+    if (codepoint2 == LAT_CAP_ZH || codepoint2 == LAT_ZH) {
+        switch (codepoint) {
+        case 'd': return CYR_DZ;
+        case 'D': return CYR_CAP_DZ;
+        }
+    }
+
+    if (codepoint2 == 'j' || codepoint2 == 'J') {
+        switch (codepoint) {
+        case 'l': return CYR_LJ;
+        case 'n': return CYR_NJ;
+        case 'L': return CYR_CAP_LJ;
+        case 'N': return CYR_CAP_NJ;
+        }
+    }
+
+    if (codepoint >= 'a' && codepoint <= 'z') return CYR_MAP[codepoint - 'a'];
+    if (codepoint >= 'A' && codepoint <= 'Z') return CYR_CAPS_MAP[codepoint - 'A'];
+
+    switch (codepoint) {
+    case LAT_CH: return CYR_CH;
+    case LAT_DJ: return CYR_DJ;
+    case LAT_SH: return CYR_SH;
+    case LAT_TJ: return CYR_TJ;
+    case LAT_ZH: return CYR_ZH;
+    case LAT_CAP_CH: return CYR_CAP_CH;
+    case LAT_CAP_DJ: return CYR_CAP_DJ;
+    case LAT_CAP_SH: return CYR_CAP_SH;
+    case LAT_CAP_TJ: return CYR_CAP_TJ;
+    case LAT_CAP_ZH: return CYR_CAP_ZH;
+    }
+
+    return 0;
+}
+
+static unsigned
+digraph_to_latin(unsigned codepoint, unsigned codepoint2, unsigned capitalize, unsigned *next_out)
+{
+    static char LAT_MAP[] = {
+        'a', 'b', 'v', 'g', 'd', 'e', 0, 'z', 'i', 0, 'k', 'l',
+        'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h', 'c'
+    };
+
+    static char LAT_CAPS_MAP[] = {
+        'A', 'B', 'V', 'G', 'D', 'E', 0, 'Z', 'I', 0, 'K', 'L',
+        'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'C'
+    };
+
+    if (codepoint < CYR_CAP_DJ || codepoint > CYR_DZ) return 0;
+
+    switch (codepoint) {
+    case CYR_ZH: return LAT_ZH;
+    case CYR_CAP_ZH: return LAT_CAP_ZH;
+    }
+
+    if (codepoint >= CYR_A && codepoint <= CYR_C)
+        return LAT_MAP[codepoint - CYR_A];
+
+    if (codepoint >= CYR_CAP_A && codepoint <= CYR_CAP_C)
+        return LAT_CAPS_MAP[codepoint - CYR_CAP_A];
+
+    if (codepoint >= CYR_A) {
+        switch (codepoint) {
+        case CYR_J:  return 'j';
+        case CYR_TJ: return LAT_TJ;
+        case CYR_CH: return LAT_CH;
+        case CYR_SH: return LAT_SH;
+        case CYR_DJ: return LAT_DJ;
+        case CYR_LJ: *next_out = 'j'; return 'l';
+        case CYR_NJ: *next_out = 'j'; return 'n';
+        case CYR_DZ: *next_out = LAT_ZH; return 'd';
+        }
+    }
+    else {
+        switch (codepoint) {
+        case CYR_CAP_J:  return 'J';
+        case CYR_CAP_TJ: return LAT_CAP_TJ;
+        case CYR_CAP_CH: return LAT_CAP_CH;
+        case CYR_CAP_SH: return LAT_CAP_SH;
+        case CYR_CAP_DJ: return LAT_CAP_DJ;
+        case CYR_CAP_LJ: *next_out = (capitalize || is_cap(codepoint2)) ? 'J' : 'j'; return 'L';
+        case CYR_CAP_NJ: *next_out = (capitalize || is_cap(codepoint2)) ? 'J' : 'j'; return 'N';
+        case CYR_CAP_DZ: *next_out = (capitalize || is_cap(codepoint2)) ? LAT_CAP_ZH : LAT_ZH; return 'D';
+        }
+    }
+
+    return 0;
+}
+
+static unsigned
+digraph_to_ascii(unsigned codepoint, unsigned codepoint2, unsigned capitalize, unsigned *next_out)
+{
+    switch (codepoint) {
+    case LAT_TJ:
+    case LAT_CH:
+    case CYR_TJ:
+    case CYR_CH: return 'c';
+    case LAT_SH:
+    case CYR_SH: return 's';
+    case LAT_ZH:
+    case CYR_ZH: return 'z';
+    case LAT_DJ:
+    case CYR_DJ: *next_out = 'j'; return 'd';
+    case LAT_CAP_TJ:
+    case LAT_CAP_CH:
+    case CYR_CAP_TJ:
+    case CYR_CAP_CH: return 'C';
+    case LAT_CAP_SH:
+    case CYR_CAP_SH: return 'S';
+    case LAT_CAP_ZH:
+    case CYR_CAP_ZH: return 'Z';
+    case LAT_CAP_DJ:
+    case CYR_CAP_DJ:
+        *next_out = (capitalize || is_cap(codepoint2)) ? 'J' : 'j'; return 'D';
+    case CYR_DZ:
+        *next_out = (capitalize || is_cap(codepoint2)) ? 'Z' : 'z'; return 'd';
+    case CYR_CAP_DZ:
+        *next_out = (capitalize || is_cap(codepoint2)) ? 'Z' : 'z'; return 'D';
+    default:
+        return digraph_to_latin(codepoint, codepoint2, capitalize, next_out);
+    }
+}
+
 static VALUE
-str_to_latin(VALUE str, int ascii, int bang)
+str_to_srb(VALUE str, int strategy, int bang)
 {
     VALUE dest;
-    long dest_len;
-    int len, next_len;
-    int seen_upper = 0;
-    int force_upper = 0;
-    char *pos, *end, *seq_start = 0;
-    char cyr;
-    unsigned int codepoint = 0;
-    unsigned int next_codepoint = 0;
     rb_encoding *enc;
 
-    char CYR_MAP[] = {
-        'a', 'b', 'v', 'g', 'd', 'e', '\0', 'z', 'i', '\0', 'k',
-        'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'f', 'h', 'c'
-    };
+    int len, next_len;
+    unsigned in, in2, out, out2, seen_cap = 0;
+    char *pos, *end, *seq_start = 0;
 
-    char CYR_CAPS_MAP[] = {
-        'A', 'B', 'V', 'G', 'D', 'E', '\0', 'Z', 'I', '\0', 'K',
-        'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'F', 'H', 'C'
-    };
+    unsigned (*method)(unsigned, unsigned, unsigned, unsigned*);
+
+    switch(strategy) {
+    case 0:  method = &digraph_to_cyr;   break;
+    case 1:  method = &digraph_to_latin; break;
+    default: method = &digraph_to_ascii;
+    }
 
     StringValue(str);
     pos = RSTRING_PTR(str);
@@ -106,123 +229,50 @@ str_to_latin(VALUE str, int ascii, int bang)
 
     end = RSTRING_END(str);
     enc = STR_ENC_GET(str);
-    dest_len = RSTRING_LEN(str) + 30;
-    dest = rb_str_buf_new(dest_len);
+    dest = rb_str_buf_new(RSTRING_LEN(str) + 30);
     rb_enc_associate(dest, enc);
 
-    codepoint = rb_enc_codepoint_len(pos, end, &len, enc);
+    in = rb_enc_codepoint_len(pos, end, &len, enc);
 
     while (pos < end) {
-        if (pos + len < end) {
-            next_codepoint = rb_enc_codepoint_len(pos + len, end, &next_len, enc);
-        }
+        in2 = out2 = 0;
 
-        /* Latin -> "ASCII Latin" conversion */
-        if (ascii && codepoint >= LAT_CAP_TJ && codepoint <= LAT_ZH) {
+        if (pos + len < end)
+            in2 = rb_enc_codepoint_len(pos + len, end, &next_len, enc);
+
+        out = (*method)(in, in2, seen_cap, &out2);
+
+        if (out) {
+            /* flush previous untranslatable sequence */
             if (seq_start) {
                 rb_str_buf_cat(dest, seq_start, pos - seq_start);
                 seq_start = 0;
             }
 
-            switch (codepoint) {
-            case LAT_TJ:
-            case LAT_CH:     rb_str_buf_cat(dest, "c",  1); break;
-            case LAT_DJ:     rb_str_buf_cat(dest, "dj", 2); break;
-            case LAT_SH:     rb_str_buf_cat(dest, "s",  1); break;
-            case LAT_ZH:     rb_str_buf_cat(dest, "z",  1); break;
-            case LAT_CAP_TJ:
-            case LAT_CAP_CH: rb_str_buf_cat(dest, "C",  1); break;
-            case LAT_CAP_SH: rb_str_buf_cat(dest, "S",  1); break;
-            case LAT_CAP_ZH: rb_str_buf_cat(dest, "Z",  1); break;
-            case LAT_CAP_DJ:
-                (seen_upper || is_upper(next_codepoint))
-                    ? rb_str_buf_cat(dest, "DJ", 2)
-                    : rb_str_buf_cat(dest, "Dj", 2);
-                break;
-            default:
-                rb_str_buf_cat(dest, pos, len);
-            }
+            _str_cat_char(dest, out, enc);
+            if (out2) _str_cat_char(dest, out2, enc);
+        }
+        else if (!seq_start) {
+            /* mark the beginning of an untranslatable sequence */
+            seq_start = pos;
         }
 
-        /* Cyrillic coderange */
-        else if (is_cyrillic(codepoint)) {
-            if (seq_start) {
-                rb_str_buf_cat(dest, seq_start, pos - seq_start);
-                seq_start = 0;
-            }
-
-            if (codepoint >= CYR_A) {
-                if (maps_directly(codepoint)) {
-                    cyr = CYR_MAP[codepoint - CYR_A];
-                    cyr ? rb_str_buf_cat(dest, &cyr, 1)
-                        : rb_str_buf_cat(dest, pos, len);
-                }
-                else {
-                    switch (codepoint) {
-                    case CYR_J:  rb_str_buf_cat(dest, "j",  1); break;
-                    case CYR_LJ: rb_str_buf_cat(dest, "lj", 2); break;
-                    case CYR_NJ: rb_str_buf_cat(dest, "nj", 2); break;
-                    case CYR_DJ: STR_CAT_COND_ASCII(ascii, dest, "dj", LAT_DJ, 2, enc); break;
-                    case CYR_TJ: STR_CAT_COND_ASCII(ascii, dest, "c",  LAT_TJ, 1, enc); break;
-                    case CYR_CH: STR_CAT_COND_ASCII(ascii, dest, "c",  LAT_CH, 1, enc); break;
-                    case CYR_SH: STR_CAT_COND_ASCII(ascii, dest, "s",  LAT_SH, 1, enc); break;
-                    case CYR_ZH: STR_CAT_COND_ASCII(ascii, dest, "z",  LAT_ZH, 1, enc); break;
-                    case CYR_DZ:
-                        rb_str_buf_cat(dest, "d", 1);
-                        STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
-                        break;
-                    default:
-                        rb_str_buf_cat(dest, pos, len);
-                    }
-                }
-            }
-            else {
-                if (maps_directly(codepoint)) {
-                    cyr = CYR_CAPS_MAP[codepoint - CYR_CAP_A];
-                    cyr ? rb_str_buf_cat(dest, &cyr, 1)
-                        : rb_str_buf_cat(dest, pos, len);
-                }
-                else {
-                    force_upper = seen_upper || is_upper(next_codepoint);
-
-                    switch (codepoint) {
-                    case CYR_CAP_J:  rb_str_buf_cat(dest, "J", 1); break;
-                    case CYR_CAP_LJ: rb_str_buf_cat(dest, (force_upper ? "LJ" : "Lj"), 2); break;
-                    case CYR_CAP_NJ: rb_str_buf_cat(dest, (force_upper ? "NJ" : "Nj"), 2); break;
-                    case CYR_CAP_TJ: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_TJ, 1, enc); break;
-                    case CYR_CAP_CH: STR_CAT_COND_ASCII(ascii, dest, "C", LAT_CAP_CH, 1, enc); break;
-                    case CYR_CAP_SH: STR_CAT_COND_ASCII(ascii, dest, "S", LAT_CAP_SH, 1, enc); break;
-                    case CYR_CAP_ZH: STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc); break;
-                    case CYR_CAP_DJ: STR_CAT_COND_ASCII(ascii, dest, (force_upper ? "DJ" : "Dj"), LAT_CAP_DJ, 2, enc); break;
-                    case CYR_CAP_DZ:
-                        rb_str_buf_cat(dest, "D", 1);
-                        force_upper ? STR_CAT_COND_ASCII(ascii, dest, "Z", LAT_CAP_ZH, 1, enc)
-                                    : STR_CAT_COND_ASCII(ascii, dest, "z", LAT_ZH, 1, enc);
-                        break;
-                    default:
-                        rb_str_buf_cat(dest, pos, len);
-                    }
-                }
-            }
-        }
-        else {
-            /* Mark the start of a copyable sequence */
-            if (!seq_start) seq_start = pos;
+        /* for cyrillic output, skip the second half of an input digraph */
+        if (strategy == 0 && is_digraph(out)) {
+            pos += next_len;
+            if (pos + len < end)
+                in2 = rb_enc_codepoint_len(pos + len, end, &next_len, enc);
         }
 
-        seen_upper = is_upper(codepoint);
+        seen_cap = is_cap(in);
 
         pos += len;
         len = next_len;
-
-        codepoint = next_codepoint;
-        next_codepoint = 0;
+        in = in2;
     }
 
-    /* Flush the last sequence, if any */
-    if (seq_start) {
-        rb_str_buf_cat(dest, seq_start, pos - seq_start);
-    }
+    /* flush final sequence */
+    if (seq_start) rb_str_buf_cat(dest, seq_start, pos - seq_start);
 
     if (bang) {
         rb_str_shared_replace(str, dest);
@@ -236,7 +286,35 @@ str_to_latin(VALUE str, int ascii, int bang)
 }
 
 /**
- * Returns a copy of <i>str</i> with the Serbian Cyrillic characters
+ * Returns a copy of <i>str</i> with Latin characters transliterated
+ * into Serbian Cyrillic.
+ *
+ * @overload to_cyrillic(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
+static VALUE
+rb_str_to_cyrillic(VALUE self, VALUE str)
+{
+    return str_to_srb(str, 0, 0);
+}
+
+/**
+ * Performs transliteration of <code>Byk.to_cyrillic</code> in place,
+ * returning <i>str</i>, whether any changes were made or not.
+ *
+ * @overload to_cyrillic!(str)
+ *   @param  [String] str text to be transliterated
+ *   @return [String] transliterated text
+ */
+static VALUE
+rb_str_to_cyrillic_bang(VALUE self, VALUE str)
+{
+    return str_to_srb(str, 0, 1);
+}
+
+/**
+ * Returns a copy of <i>str</i> with Serbian Cyrillic characters
  * transliterated into Latin.
  *
  * @overload to_latin(str)
@@ -246,11 +324,11 @@ str_to_latin(VALUE str, int ascii, int bang)
 static VALUE
 rb_str_to_latin(VALUE self, VALUE str)
 {
-    return str_to_latin(str, 0, 0);
+    return str_to_srb(str, 1, 0);
 }
 
 /**
- * Performs the transliteration of <code>Byk.to_latin</code> in place,
+ * Performs transliteration of <code>Byk.to_latin</code> in place,
  * returning <i>str</i>, whether any changes were made or not.
  *
  * @overload to_latin!(str)
@@ -260,12 +338,12 @@ rb_str_to_latin(VALUE self, VALUE str)
 static VALUE
 rb_str_to_latin_bang(VALUE self, VALUE str)
 {
-    return str_to_latin(str, 0, 1);
+    return str_to_srb(str, 1, 1);
 }
 
 /**
- * Returns a copy of <i>str</i> with the Serbian Cyrillic
- * characters transliterated into ASCII Latin.
+ * Returns a copy of <i>str</i> with Serbian characters transliterated
+ * into ASCII Latin.
  *
  * @overload to_ascii_latin(str)
  *   @param  [String] str text to be transliterated
@@ -274,11 +352,11 @@ rb_str_to_latin_bang(VALUE self, VALUE str)
 static VALUE
 rb_str_to_ascii_latin(VALUE self, VALUE str)
 {
-    return str_to_latin(str, 1, 0);
+    return str_to_srb(str, 2, 0);
 }
 
 /**
- * Performs the transliteration of <code>Byk.to_ascii_latin</code> in
+ * Performs transliteration of <code>Byk.to_ascii_latin</code> in
  * place, returning <i>str</i>, whether any changes were made or not.
  *
  * @overload to_ascii_latin!(str)
@@ -288,12 +366,14 @@ rb_str_to_ascii_latin(VALUE self, VALUE str)
 static VALUE
 rb_str_to_ascii_latin_bang(VALUE self, VALUE str)
 {
-    return str_to_latin(str, 1, 1);
+    return str_to_srb(str, 2, 1);
 }
 
 void Init_byk_native(void)
 {
     VALUE Byk = rb_define_module("Byk");
+    rb_define_singleton_method(Byk, "to_cyrillic", rb_str_to_cyrillic, 1);
+    rb_define_singleton_method(Byk, "to_cyrillic!", rb_str_to_cyrillic_bang, 1);
     rb_define_singleton_method(Byk, "to_latin", rb_str_to_latin, 1);
     rb_define_singleton_method(Byk, "to_latin!", rb_str_to_latin_bang, 1);
     rb_define_singleton_method(Byk, "to_ascii_latin", rb_str_to_ascii_latin, 1);
