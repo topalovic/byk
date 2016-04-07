@@ -35,6 +35,7 @@ Gem::Specification.new do |s|
 
   s.test_files = Dir['spec/**/*_spec.rb']
 
+  s.add_development_dependency "rake", "~> 10.5"
   s.add_development_dependency "rake-compiler", "~> 0.9"
   s.add_development_dependency "rspec", "~> 3.2"
 end
