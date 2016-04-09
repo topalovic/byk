@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+require "byk/safe"
+require "optparse"
+
+trap "SIGINT" do
+  exit 130
+end
+
+method_name = :to_cyrillic
+
+opts = OptionParser.new do |opt|
+  opt.banner = "usage: byk [options] [files]"
+  opt.summary_width = 20
+
+  opt.separator ""
+  opt.separator "options:"
+
+  opt.on("-c", "--cyrillic", "convert input to Cyrillic (default)") do
+    method_name = :to_cyrillic
+  end
+
+  opt.on("-l", "--latin", "convert input to Latin") do
+    method_name = :to_latin
+  end
+
+  opt.on("-a", "--ascii", 'convert input to "ASCII Latin"') do
+    method_name = :to_ascii_latin
+  end
+
+  opt.on_tail("-v", "--version", "show version") do
+    puts Byk::VERSION
+    exit
+  end
+end
+
+begin
+  opts.parse!
+rescue OptionParser::InvalidOption => e
+  puts e
+  puts
+  puts opts
+  exit 1
+end
+
+begin
+  puts Byk.send(method_name, ARGF.read)
+rescue => e
+  puts e
+  exit 1
+end

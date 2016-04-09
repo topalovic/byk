@@ -1,6 +1,6 @@
 # coding: utf-8
 
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require "byk/version"
@@ -22,18 +22,22 @@ Gem::Specification.new do |s|
   s.extensions    = ["ext/byk/extconf.rb"]
   s.require_paths = ["lib"]
 
-  s.files = [
-    "LICENSE",
-    "README.md",
-    "CHANGELOG.md",
-    "lib/byk.rb",
-    "lib/byk/safe.rb",
-    "lib/byk/core_ext/string.rb",
-    "lib/byk/version.rb",
-    "ext/byk/byk.c"
+  s.files = %w[
+    CHANGELOG.md
+    LICENSE
+    README.md
+    exe/byk
+    ext/byk/byk.c
+    lib/byk.rb
+    lib/byk/core_ext/string.rb
+    lib/byk/safe.rb
+    lib/byk/version.rb
   ]
 
-  s.test_files = Dir['spec/**/*_spec.rb']
+  s.bindir = "exe"
+  s.executables = ["byk"]
+
+  s.test_files = Dir["spec/**/*_spec.rb"]
 
   s.add_development_dependency "rake", "~> 10.5"
   s.add_development_dependency "rake-compiler", "~> 0.9"
