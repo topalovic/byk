@@ -1,49 +1,84 @@
 #!/usr/bin/env ruby
-# coding: utf-8
 
 require "benchmark"
 require "open-uri"
+require "byk"
 
-%w[byk srbovanje].each do |gem|
-  begin
-    require gem
-  rescue LoadError
-    abort "Can't load \"#{gem}\".\ngem install #{gem}?"
+begin
+  require "srbovanje"
+rescue LoadError
+end
+
+N = 100
+
+azb = Byk::AZBUKA + Byk::AZBUKA_CAPS
+abc = Byk::ABECEDA + Byk::ABECEDA_CAPS
+
+methods = %i[to_cyrillic to_latin to_ascii_latin]
+
+puts RUBY_DESCRIPTION
+puts
+puts "Synthetic samples:"
+
+samples = {
+  cyr: (azb * 2).shuffle.join * 100,
+  lat: (abc * 2).shuffle.join * 100,
+  mix: (azb + abc).shuffle.join * 100
+}
+
+Benchmark.bm(28) do |x|
+  methods.each do |m|
+    samples.each do |label, sample|
+      x.report([label, m].join('.')) { N.times { Byk.send(m, sample) } }
+    end
+  end
+
+  if defined? Srbovanje
+    samples.each do |label, sample|
+      x.report("#{label}.latinicom (pure Ruby)") { N.times { sample.latinicom } }
+    end
   end
 end
 
-ascii   = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam egestas finibus lorem."
-mixed   = '<meta name="description" content="ПОЛИТИКА Online, најстарији дневни лист на Балкану"/>'
-pangram = "Фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима. А сад да изравнамо."
-article = open("http://www.politika.rs/").read
+puts
+puts "Real world sample:"
 
-samples = {
-  :ascii   => ascii   * 100,
-  :mixed   => mixed   * 100,
-  :pangram => pangram * 100,
-  :long    => article
-}
+sample = open("https://sr.wikipedia.org/").read
 
-n = 100
+Benchmark.bm(28) do |x|
+  methods.each do |m|
+    x.report(['sample', m].join('.')) { N.times { Byk.send(m, sample) } }
+  end
 
-Benchmark.bmbm do |x|
-  samples.each do |label, sample|
-    x.report("Srbovanje -- #{label}:") { n.times { sample.latinicom } }
-    x.report("Byk       -- #{label}:") { n.times { sample.to_latin  } }
+  if defined? Srbovanje
+    x.report("sample.latinicom (pure Ruby)") { N.times { sample.latinicom } }
   end
 end
 
 =begin
-                            user     system      total        real
-Srbovanje -- ascii:     0.320000   0.000000   0.320000 (  0.322403)
-Byk       -- ascii:     0.010000   0.000000   0.010000 (  0.008082)
-Srbovanje -- mixed:     0.360000   0.000000   0.360000 (  0.360589)
-Byk       -- mixed:     0.020000   0.000000   0.020000 (  0.019448)
-Srbovanje -- pangram:   0.380000   0.000000   0.380000 (  0.379505)
-Byk       -- pangram:   0.030000   0.000000   0.030000 (  0.030226)
-Srbovanje -- long:      2.460000   0.000000   2.460000 (  2.460583)
-Byk       -- long:      0.090000   0.000000   0.090000 (  0.088677)
 
-ruby 2.2.0p0 [x86_64-linux]
+ruby 2.3.0p0 (2015-12-25 revision 53290) [x86_64-darwin15]
+
+Synthetic samples:
+                                   user     system      total        real
+cyr.to_cyrillic                0.030000   0.000000   0.030000 (  0.029785)
+lat.to_cyrillic                0.060000   0.000000   0.060000 (  0.056918)
+mix.to_cyrillic                0.040000   0.000000   0.040000 (  0.047981)
+cyr.to_latin                   0.070000   0.000000   0.070000 (  0.065395)
+lat.to_latin                   0.020000   0.000000   0.020000 (  0.017832)
+mix.to_latin                   0.040000   0.000000   0.040000 (  0.042400)
+cyr.to_ascii_latin             0.070000   0.000000   0.070000 (  0.060013)
+lat.to_ascii_latin             0.030000   0.000000   0.030000 (  0.031043)
+mix.to_ascii_latin             0.050000   0.000000   0.050000 (  0.050094)
+cyr.latinicom (pure Ruby)      0.480000   0.000000   0.480000 (  0.483063)
+lat.latinicom (pure Ruby)      0.520000   0.000000   0.520000 (  0.520808)
+mix.latinicom (pure Ruby)      0.520000   0.000000   0.520000 (  0.522628)
+
+Real world sample:
+                                   user     system      total        real
+sample.to_cyrillic             0.390000   0.010000   0.400000 (  0.392367)
+sample.to_latin                0.190000   0.000000   0.190000 (  0.190762)
+sample.to_ascii_latin          0.200000   0.000000   0.200000 (  0.205282)
+sample.latinicom (pure Ruby)   4.660000   0.010000   4.670000 (  4.669567)
 
 =end
