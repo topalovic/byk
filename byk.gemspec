@@ -8,14 +8,14 @@ require "byk/version"
 Gem::Specification.new do |s|
   s.name          = "byk"
   s.version       = Byk::VERSION
-  s.date          = "2015-04-25"
+  s.date          = "2016-04-09"
   s.authors       = ["Nikola Topalović"]
   s.email         = "nikola.topalovic@gmail.com"
-
-  s.summary       = %q{Fast transliteration of Serbian Cyrillic into Latin.}
-  s.description   = %q{Provides C-optimized methods for transliteration of Serbian Cyrillic into Latin.}
   s.homepage      = "https://github.com/topalovic/byk"
   s.license       = "MIT"
+
+  s.summary       = %q{Fast transliteration of Serbian Cyrillic to Latin and back. Brzo preslovljavanje ćirilice u latinicu i obratno.}
+  s.description   = %q{Fast transliteration of Serbian Cyrillic to Latin and back. Brzo preslovljavanje ćirilice u latinicu i obratno.}
 
   s.required_ruby_version = ">= 1.9.2"
 

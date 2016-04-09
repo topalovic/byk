@@ -1,5 +1,10 @@
 # Changelog
 
+### Byk 1.0.0 (2016-04-09)
+
+* Introduced `#to_cyrillic` and `#to_cyrillic!`
+* Introduced console utility
+
 ### Byk 0.6.0 (2015-04-25)
 
 * Introduced module methods and the optional safe require
