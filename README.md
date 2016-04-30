@@ -4,40 +4,39 @@ Byk
 [![Gem Version](https://badge.fury.io/rb/byk.svg)](https://rubygems.org/gems/byk)
 [![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
 
-Ruby gem for fast transliteration of Serbian Cyrillic ↔ Latin
+Руби пакет за брзо пресловљавање ћирилице у латиницу и обратно
 
 ![byk](https://cloud.githubusercontent.com/assets/626128/7155207/07545960-e35d-11e4-804e-5fdee70a3e30.png)
 
+[[English, please!](README.en.md)]
 
-## Installation
+## Инсталација
 
-Byk can be used as a standalone console utility or as a `String`
-extension in your Ruby programs. It has zero dependencies beyond
-vanilla Ruby and the toolchain for building native gems <sup>1</sup>.
+Byk се може користити као самостални конзолни алат или као `String` додатак у Руби програмима. Не зависи ни од каквих пакета поред програмског језика Руби и стандардних алата за компајлирање <sup>1</sup>.
 
-You can install it directly:
+Можеш га инсталирати директно:
 
 ```ruby
 $ gem install byk
 ```
 
-or add it as a dependency in your application's Gemfile:
+или додати у `Gemfile` своје апликације:
 
 ```ruby
 gem "byk"
 ```
 
-<sub><sup>1</sup> For Windows, you might want to check out
-[DevKit](https://github.com/oneclick/rubyinstaller/wiki/Development-Kit)</sub>
+<sub><sup>1</sup> За Windows, види [DevKit](https://github.com/oneclick/rubyinstaller/wiki/Development-Kit)</sub>
 
 
-## Usage
+## Употреба
 
-### As a standalone utility
+### Као самостални алат
 
-Here's the help banner with all the available options:
+Ево прегледа могућности конзолног алата:
 
 ```
+$ byk --help
 usage: byk [options] [files]
 
 options:
@@ -47,26 +46,15 @@ options:
   -v, --version        show version
 ```
 
-Translation goes to stdout so you can redirect it or pipe it as you
-see fit. Let's take a look at some common scenarios.
+За превод "у лету", проследи текст команди:
 
-To translate files to Cyrillic:
 ```sh
-$ byk in1.txt in2.txt > out.txt
-```
-
-To translate files to Latin and search for a phrase:
-```sh
-$ byk -l file.txt | grep stvar
-```
-
-Ad hoc conversion:
-```sh
-$ echo "Вук Стефановић Караџић" | byk -a
+$ byk -a <<< "Вук Стефановић Караџић"
 Vuk Stefanovic Karadzic
 ```
 
-or simply omit args and type away:
+Алтернативно, позови команду, унеси текст за превод и обележи крај уноса помоћу <kbd>Ctrl</kbd> <kbd>D</kbd>:
+
 ```sh
 $ byk
 a u ruke Mandušića Vuka
@@ -76,127 +64,89 @@ biće svaka puška ubojita!
 биће свака пушка убојита!
 ```
 
-`^D` being <kbd>ctrl</kbd> <kbd>d</kbd>.
+Превод се шаље на стандардни излаз, те га можеш преусмерити по потреби. На пример, за превод текстуалне датотеке на ћирилицу и чување превода:
+
+```sh
+$ byk lat.txt > cir.txt
+```
 
 
-### As a `String` extension
+### Као `String` додатак
 
-Unless you're using Bundler, make sure to require the gem in your
-initializer:
+У случају да не користиш Bundler, увези пакет "ручно":
 
 ```ruby
 require "byk"
 ```
 
-This will extend `String` with a couple of simple methods:
+што ће проширити `String` новим методама:
 
 ```ruby
-"Šeširdžija".to_cyrillic    # => "Шеширџија"
-"Шеширџија".to_latin        # => "Šeširdžija"
-"Шеширџија".to_ascii_latin  # => "Sesirdzija"
+"Šeširdžija".to_cyrillic   #=> "Шеширџија"
+"Шеширџија".to_latin       #=> "Šeširdžija"
+"Шеширџија".to_ascii_latin #=> "Sesirdzija"
 ```
 
-These do not modify the receiver. For that, there's a destructive
-variant of each:
+и њиховим деструктивним верзијама:
 
 ```ruby
 text = "Šeširdžija"
-text.to_cyrillic!     # => "Шеширџија"
-text.to_latin!        # => "Šeširdžija"
-text.to_ascii_latin!  # => "Sesirdzija"
-text                  # => "Sesirdzija"
+text.to_ascii_latin! #=> "Sesirdzija"
+text                 #=> "Sesirdzija"
 ```
 
-Note that both latinization methods observe
-[digraph capitalization rules](http://sr.wikipedia.org/wiki/Гајица#.D0.94.D0.B8.D0.B3.D1.80.D0.B0.D1.84.D0.B8):
+#### "Безбедан" увоз
+
+У случају да не желиш да проширујеш `String`, можеш извршити "безбедан" увоз:
 
 ```ruby
-"ЉИЉА Љиљановић".to_latin        # => "LJILJA Ljiljanović"
-"ĐORĐE Đorđević".to_ascii_latin  # => "DJORDJE Djordjevic"
-```
+# унутар Gemfile-а:
+gem "byk", require: "byk/safe"
 
-
-### Safe require
-
-If you prefer not to monkey patch `String`, you can do a "safe"
-require in your Gemfile:
-
-
-```ruby
-gem "byk", :require => "byk/safe"
-```
-
-or initializer:
-
-```ruby
+# иначе:
 require "byk/safe"
 ```
 
-Then, you should rely on module methods:
+па се ослонити на методе модула:
 
 ```ruby
-text = "Жвазбука"
-
-Byk.to_latin(text)   # => "Žvazbuka"
-text                 # => "Жвазбука"
-
-Byk.to_latin!(text)  # => "Žvazbuka"
-text                 # => "Žvazbuka"
-
-# etc.
+Byk.to_latin("Жвазбука") #=> "Žvazbuka"
 ```
 
 
-## How fast is "fast" transliteration?
+## Напомене
 
-Here's a quick test:
+Ретки случајеви диграфа које треба сачувати код превођења у ћирилицу нису узети у разматрање: _Танјуг_, _надживети_ и слично.
 
-```sh
-$ wget https://sr.wikipedia.org/ -O sample
-$ du -h sample
-128K
+С друге стране, методе за латинизацију исправно преводе [велике диграфе](http://sr.wikipedia.org/wiki/Гајица#.D0.94.D0.B8.D0.B3.D1.80.D0.B0.D1.84.D0.B8):
 
-$ time byk -l sample > /dev/null
-0.08s user 0.04s system 96% cpu 0.126 total
+```ruby
+"ЉИЉА Љ. Љиљановић".to_latin       #=> "LJILJA Lj. Ljiljanović"
+"ĐORĐE Đ. Đorđević".to_ascii_latin #=> "DJORDJE Dj. Djordjevic"
 ```
 
-Let's up the ante:
 
-```sh
-$ for i in {1..800}; do cat sample; done > big
-$ du -h big
-97M
+## Колико брзо је "брзо" пресловљавање?
 
-$ time byk -l big > /dev/null
-1.71s user 0.13s system 99% cpu 1.846 total
-```
-
-So, ~100MB in under 2s. Fast enough, I suppose. You can expect it to
-scale linearly.
-
-Compared to the pure Ruby implementation, it is about
-[10-30x faster](benchmark), depending on the input composition and the
-transliteration method applied.
+Byk је [10-30x бржи](benchmark) од [наивне Руби имплементације](https://github.com/dejan/srbovanje), у зависности од састава улаза и смера превођења.
 
 
-## Testing
+## Тестирање
 
-To test the gem, clone the repo and run:
+Клонирај пројекат и покрени тестове:
 
 ```
 $ bundle && bundle exec rake
 ```
 
 
-## Compatibility
+## Компатибилност
 
-Byk is supported under MRI 1.9.2+. I might try my hand in writing a
-JRuby extension in a future release.
-
+Byk се компајлира под стандардним Рубијем (MRI), почев од верзије 1.9.2.
 
 
-## License
+## Лиценца
 
-This gem is released under the [MIT License](LICENSE).
+Овај пакет је објављен под [МИТ лиценцом](LICENSE).
 
 Уздравље!
