@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "benchmark"
+require "benchmark/ips"
 require "open-uri"
 require "byk"
 
@@ -8,8 +8,6 @@ begin
   require "srbovanje"
 rescue LoadError
 end
-
-N = 100
 
 azb = Byk::AZBUKA + Byk::AZBUKA_CAPS
 abc = Byk::ABECEDA + Byk::ABECEDA_CAPS
@@ -19,66 +17,55 @@ methods = %i[to_cyrillic to_latin to_ascii_latin]
 puts RUBY_DESCRIPTION
 puts
 puts "Synthetic samples:"
+puts
 
 samples = {
-  cyr: (azb * 2).shuffle.join * 100,
-  lat: (abc * 2).shuffle.join * 100,
-  mix: (azb + abc).shuffle.join * 100
+  cyr: (azb * 2).shuffle.join * 1000,
+  lat: (abc * 2).shuffle.join * 1000,
+  mix: (azb + abc).shuffle.join * 1000
 }
 
-Benchmark.bm(28) do |x|
+Benchmark.ips do |x|
+  x.config(time: 1, warmup: 1)
+
   methods.each do |m|
     samples.each do |label, sample|
-      x.report([label, m].join('.')) { N.times { Byk.send(m, sample) } }
+      x.report([label, m].join('.')) { Byk.send(m, sample) }
     end
   end
 
   if defined? Srbovanje
     samples.each do |label, sample|
-      x.report("#{label}.latinicom (pure Ruby)") { N.times { sample.latinicom } }
+      x.report("#{label} (pure Ruby)") { sample.latinicom }
     end
   end
+
+  x.compare!
 end
 
 puts
 puts "Real world sample:"
+puts
 
-sample = open("https://sr.wikipedia.org/").read
+sample = URI.open("https://sr.wikipedia.org/").read
 
-Benchmark.bm(28) do |x|
-  methods.each do |m|
-    x.report(['sample', m].join('.')) { N.times { Byk.send(m, sample) } }
-  end
+Benchmark.ips do |x|
+  x.config(time: 1, warmup: 1)
 
-  if defined? Srbovanje
-    x.report("sample.latinicom (pure Ruby)") { N.times { sample.latinicom } }
-  end
+  methods.each { |m| x.report(m) { Byk.send(m, sample) } }
+  x.report("pure Ruby") { sample.latinicom } if defined? Srbovanje
+
+  x.compare!
 end
 
 =begin
-
-ruby 2.3.0p0 (2015-12-25 revision 53290) [x86_64-darwin15]
-
-Synthetic samples:
-                                   user     system      total        real
-cyr.to_cyrillic                0.030000   0.000000   0.030000 (  0.029785)
-lat.to_cyrillic                0.060000   0.000000   0.060000 (  0.056918)
-mix.to_cyrillic                0.040000   0.000000   0.040000 (  0.047981)
-cyr.to_latin                   0.070000   0.000000   0.070000 (  0.065395)
-lat.to_latin                   0.020000   0.000000   0.020000 (  0.017832)
-mix.to_latin                   0.040000   0.000000   0.040000 (  0.042400)
-cyr.to_ascii_latin             0.070000   0.000000   0.070000 (  0.060013)
-lat.to_ascii_latin             0.030000   0.000000   0.030000 (  0.031043)
-mix.to_ascii_latin             0.050000   0.000000   0.050000 (  0.050094)
-cyr.latinicom (pure Ruby)      0.480000   0.000000   0.480000 (  0.483063)
-lat.latinicom (pure Ruby)      0.520000   0.000000   0.520000 (  0.520808)
-mix.latinicom (pure Ruby)      0.520000   0.000000   0.520000 (  0.522628)
+ruby 2.7.0p0 (2019-12-25 revision 647ee6f091) [x86_64-darwin19]
 
 Real world sample:
-                                   user     system      total        real
-sample.to_cyrillic             0.390000   0.010000   0.400000 (  0.392367)
-sample.to_latin                0.190000   0.000000   0.190000 (  0.190762)
-sample.to_ascii_latin          0.200000   0.000000   0.200000 (  0.205282)
-sample.latinicom (pure Ruby)   4.660000   0.010000   4.670000 (  4.669567)
 
+Comparison:
+            to_latin:      624.8 i/s
+      to_ascii_latin:      590.2 i/s - 1.06x  slower
+         to_cyrillic:      304.1 i/s - 2.05x  slower
+           pure Ruby:       28.9 i/s - 21.62x  slower
 =end
