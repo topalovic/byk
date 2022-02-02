@@ -2,7 +2,6 @@ Byk
 ===
 
 [![Gem Version](https://badge.fury.io/rb/byk.svg)](https://rubygems.org/gems/byk)
-[![Build Status](https://travis-ci.org/topalovic/byk.svg?branch=master)](https://travis-ci.org/topalovic/byk)
 
 Ruby gem for fast transliteration of Serbian Cyrillic to Latin and vice versa
 
