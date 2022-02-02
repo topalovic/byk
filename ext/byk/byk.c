@@ -278,8 +278,7 @@ str_to_srb(VALUE str, int strategy, int bang)
         rb_str_shared_replace(str, dest);
     }
     else {
-	OBJ_INFECT(dest, str);
-	str = dest;
+        str = dest;
     }
 
     return str;
