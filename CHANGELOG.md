@@ -1,5 +1,10 @@
 # Changelog
 
+### Byk 1.1.0 (2022-02-02)
+
+* Removed string tainting, it is deprecated and planned for removal
+* Upgraded development dependencies and required Ruby version
+
 ### Byk 1.0.0 (2016-04-09)
 
 * Introduced `#to_cyrillic` and `#to_cyrillic!`

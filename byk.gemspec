@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.homepage      = "https://github.com/topalovic/byk"
   s.license       = "MIT"
 
-  s.summary       = %q{Fast transliteration of Serbian Cyrillic to Latin and back. Brzo preslovljavanje ćirilice u latinicu i obratno.}
+  s.summary       = %q{Transliteration of Serbian Cyrillic <-> Latin}
   s.description   = %q{Fast transliteration of Serbian Cyrillic to Latin and back. Brzo preslovljavanje ćirilice u latinicu i obratno.}
 
   s.required_ruby_version = ">= 2.2.0"

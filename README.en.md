@@ -142,7 +142,7 @@ $ bundle && bundle exec rake
 
 ## Compatibility
 
-Byk is supported under MRI 1.9.2+.
+Byk supports Ruby MRI only.
 
 
 ## License
