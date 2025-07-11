@@ -1,4 +1,5 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require "spec_helper"
 
 describe Byk do
@@ -10,25 +11,25 @@ describe Byk do
   shared_examples :base do |method|
 
     # See http://sr.wikipedia.org/wiki/Панграм
-    let(:pangram) { "фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима." }
-    let(:pangram_latin) { "fijuče vetar u šiblju, ledi pasaže i kuće iza njih i gunđa u odžacima." }
-    let(:pangram_ascii_latin) { "fijuce vetar u siblju, ledi pasaze i kuce iza njih i gundja u odzacima." }
+    let(:pangram) { +"фијуче ветар у шибљу, леди пасаже и куће иза њих и гунђа у оџацима." }
+    let(:pangram_latin) { +"fijuče vetar u šiblju, ledi pasaže i kuće iza njih i gunđa u odžacima." }
+    let(:pangram_ascii_latin) { +"fijuce vetar u siblju, ledi pasaze i kuce iza njih i gundja u odzacima." }
 
-    let(:pangram_caps) { "ФИЈУЧЕ ВЕТАР У ШИБЉУ, ЛЕДИ ПАСАЖЕ И КУЋЕ ИЗА ЊИХ И ГУНЂА У ОЏАЦИМА." }
-    let(:pangram_latin_caps) { "FIJUČE VETAR U ŠIBLJU, LEDI PASAŽE I KUĆE IZA NJIH I GUNĐA U ODŽACIMA." }
-    let(:pangram_ascii_latin_caps) { "FIJUCE VETAR U SIBLJU, LEDI PASAZE I KUCE IZA NJIH I GUNDJA U ODZACIMA." }
+    let(:pangram_caps) { +"ФИЈУЧЕ ВЕТАР У ШИБЉУ, ЛЕДИ ПАСАЖЕ И КУЋЕ ИЗА ЊИХ И ГУНЂА У ОЏАЦИМА." }
+    let(:pangram_latin_caps) { +"FIJUČE VETAR U ŠIBLJU, LEDI PASAŽE I KUĆE IZA NJIH I GUNĐA U ODŽACIMA." }
+    let(:pangram_ascii_latin_caps) { +"FIJUCE VETAR U SIBLJU, LEDI PASAZE I KUCE IZA NJIH I GUNDJA U ODZACIMA." }
 
     let(:full_cyrillic_coderange) { (0x400..0x4ff).map { |i| i.chr(Encoding::UTF_8) } }
     let(:non_serbian_cyrillic_coderange) { full_cyrillic_coderange - Byk::AZBUKA - Byk::AZBUKA_CAPS }
     let(:non_serbian_cyrillic) { non_serbian_cyrillic_coderange.join }
 
-    let(:ascii) { "The quick brown fox jumps over the lazy dog." }
-    let(:other) { "संस्कृतम्" }
+    let(:ascii) { +"The quick brown fox jumps over the lazy dog." }
+    let(:other) { +"संस्कृतम्" }
 
-    let(:mixed) { "संस्कृतम् илити Sanskrit, obrati ПАЖЊУ." }
-    let(:mixed_cyrillic) { "संस्कृतम् илити Санскрит, обрати ПАЖЊУ." }
-    let(:mixed_latin) { "संस्कृतम् iliti Sanskrit, obrati PAŽNJU." }
-    let(:mixed_ascii_latin) { "संस्कृतम् iliti Sanskrit, obrati PAZNJU." }
+    let(:mixed) { +"संस्कृतम् илити Sanskrit, obrati ПАЖЊУ." }
+    let(:mixed_cyrillic) { +"संस्कृतम् илити Санскрит, обрати ПАЖЊУ." }
+    let(:mixed_latin) { +"संस्कृतम् iliti Sanskrit, obrati PAŽNJU." }
+    let(:mixed_ascii_latin) { +"संस्कृतम् iliti Sanskrit, obrati PAZNJU." }
 
     it "doesn't translate an empty string" do
       expect(Byk.send(method, "")).to eq ""
@@ -44,9 +45,9 @@ describe Byk do
 
     let(:edge_cases) do
       [
-        ["lJ", "љ"],
-        ["nJ", "њ"],
-        ["dŽ", "џ"]
+        [+"lJ", "љ"],
+        [+"nJ", "њ"],
+        [+"dŽ", "џ"]
       ]
     end
 
@@ -90,9 +91,9 @@ describe Byk do
 
     let(:edge_cases) do
       [
-        ["ЉЉ", "LJLJ"],
-        ["ЊЊ", "NJNJ"],
-        ["ЏЏ", "DŽDŽ"]
+        [+"ЉЉ", "LJLJ"],
+        [+"ЊЊ", "NJNJ"],
+        [+"ЏЏ", "DŽDŽ"]
       ]
     end
 
@@ -140,18 +141,18 @@ describe Byk do
 
     let(:edge_cases) do
       [
-        ["Њ", "Nj"],
-        ["Љ", "Lj"],
-        ["Џ", "Dz"],
-        ["Ђ", "Dj"],
-        ["Đ", "Dj"],
-        ["ЊЊ", "NJNJ"],
-        ["ЉЉ", "LJLJ"],
-        ["ЏЏ", "DZDZ"],
-        ["ЂЂ", "DJDJ"],
-        ["ĐĐ", "DJDJ"],
-        ["ЂУРАЂ Ђурђевић", "DJURADJ Djurdjevic"],
-        ["ĐURAĐ Đurđević", "DJURADJ Djurdjevic"]
+        [+"Њ", "Nj"],
+        [+"Љ", "Lj"],
+        [+"Џ", "Dz"],
+        [+"Ђ", "Dj"],
+        [+"Đ", "Dj"],
+        [+"ЊЊ", "NJNJ"],
+        [+"ЉЉ", "LJLJ"],
+        [+"ЏЏ", "DZDZ"],
+        [+"ЂЂ", "DJDJ"],
+        [+"ĐĐ", "DJDJ"],
+        [+"ЂУРАЂ Ђурђевић", "DJURADJ Djurdjevic"],
+        [+"ĐURAĐ Đurđević", "DJURADJ Djurdjevic"]
       ]
     end
 
@@ -188,14 +189,14 @@ describe Byk do
 
   shared_examples :non_destructive_method do |method|
     it "doesn't modify the arg" do
-      str = "ЖŽ"
+      str = +"ЖŽ"
       expect { Byk.send(method, str) }.to_not change { str }
     end
   end
 
   shared_examples :destructive_method do |method|
     it "modifies the arg" do
-      str = "ЖŽ"
+      str = +"ЖŽ"
       expect { Byk.send(method, str) }.to change { str }
     end
   end
